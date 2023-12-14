@@ -1,4 +1,40 @@
-
 {
-	os_env_file:	"~/openstack-bundles/stable/openstack-base/openrc"
+	"os_env_file":	"~/openstack-bundles/stable/openstack-base/openrc",
+	"nodes":
+	[
+		{ 
+			"name": "dc1",
+			"os": "win2k22",
+			"is_first_domain_controller": true,
+			"domain": "castle_domain"
+		},
+		{
+			"name": "dc2" ,
+			"os": "win2k22",
+			"is_additional_domain_controller": true,
+			"domain": "castle_domain"
+		},
+		{
+			"name": "winep1",
+			"os": "win2k22",
+			"domain": "castle_domain"
+
+		},
+		{
+			
+			"name": "winep2",
+			"os": "win2k22",
+			"domain": "castle_domain"
+		},
+		{
+			"name": "linep3",
+			"os": "jammy",
+			"domain": "castle_domain"
+		},
+		{
+			"name": "linep4",
+			"os": "jammy",
+			"domain": "castle_domain"
+		}
+	]
 }
