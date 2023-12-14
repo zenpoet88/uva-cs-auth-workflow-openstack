@@ -14,14 +14,19 @@ or prompt the user for things like passwords (less preferred), etc.
 
 ##  Sub-fields
 
-* `node` - object.  Required subfields a `name` subfield and an `os` subfield that specify the name and os, respectively.  Optional subfield `domain` specifies
-the windows domain that the machine should join.
+* `node` - object.  Subfields are:
+**  a `name` - string.The name of the node. (required)
+** an `os` - string. Specify the os to use. (required)
+** `domain` - string. the windows domain that the machine should join, or no domain if the file is empty. (optional)
+** `size` - string. the size of an instance.
 
 * `name` - string.  THe name of an object.
 
 * `os` - string. The name of an os, must be one of `win2k22`, `jammy`.
 
 * `domain` - string. The name of the Windows domain that the node should join.
+
+* 'size' - string. The size of parent opbject.
 
 
 
