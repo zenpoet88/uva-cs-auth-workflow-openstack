@@ -2,7 +2,7 @@ import sys
 import logging
 import json
 from datetime import date
-import openstack_cloud
+from openstack_cloud import OpenstackCloud
 
 
 def load_configs(cloud_config_filename, enterprise_filename):
@@ -17,9 +17,9 @@ def load_configs(cloud_config_filename, enterprise_filename):
 
     return cloud_config, enterprise
 
-def deploy_nodes(cloud_config,enterprise):
+def deploy_enterprise(cloud_config,enterprise):
     ret = {}
-    ret["deploy_start"] = date.today();
+    ret["deploy_start"] = str(date.today());
     match cloud_config['cloud_type'].lower():
         case 'openstack':
            print("Using openstack cloud") 
@@ -27,7 +27,9 @@ def deploy_nodes(cloud_config,enterprise):
         case _:
             print("Cannot find cloud type: " + cloud_config['cloud_type'])
 
-    ret["deploy_end"] = date.today();
+    ret['deployed'] = cloud.deploy_enterprise(enterprise)
+
+    ret["deploy_end"] = str(date.today());
     return ret
 
 def main():
@@ -37,24 +39,25 @@ def main():
         sys.exit(1)
 
     json_output = {}
-    json_output["start_time"] = date.today()
+    json_output["start_time"] = str(date.today())
     cloud_config_filename = sys.argv[1]
     enterprise_filename  = sys.argv[2]
     cloud_config,enterprise = load_configs(cloud_config_filename, enterprise_filename)
 
     print("Deploying nodes.")
-    enterprise_built = deploy_nodes(cloud_config,enterprise)
-    print("Nodes deployed, writing to info to nodes.json");
+    enterprise_built = deploy_enterprise(cloud_config,enterprise)
+    print("Deploying nodes, completed.")
+
     json_output['backend_config'] = cloud_config;
     json_output['enterprise_to_build'] = enterprise;
     json_output['enterprise_built'] = enterprise_built;
-    json_output["end_time"] = date.today()
+    json_output["end_time"] = str(date.today())
 
+    print("Enterprise built.  Writing output to output.json.")
     with open("output.json", "w") as f:
         json.dump(json_output,f)
 
     return
-
 
 
 if __name__ == '__main__':
