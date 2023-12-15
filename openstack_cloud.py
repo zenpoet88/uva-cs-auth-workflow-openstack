@@ -68,6 +68,7 @@ class OpenstackCloud:
             for instance_key in self.servers:
                 instance_name=self.servers[instance_key]['name']
                 if to_deploy_name.strip() == instance_name.strip():
+                    print("Found that server " + instance_name + " already exists.")
                     return False;
         return True
 
@@ -116,6 +117,7 @@ class OpenstackCloud:
 
         ret['check_deploy_ok'] = self.check_deploy_ok(enterprise)
         if not ret['check_deploy_ok']:
+            print("Found that one or more nodes already exist, aborting deploy.")
             return  ret
 
         for node in enterprise['nodes']:
@@ -137,8 +139,8 @@ class OpenstackCloud:
             print("Creating server named " + name)
             nova_instance = self.nova_sess.servers.create(name=name, image=nova_image, flavor=nova_flavor, key_name=keypair, nics=nova_nics)
             time.sleep(5);
+            print(" Server " + name + " has id " + nova_instance.id)
             nova_instance = self.nova_sess.servers.get(nova_instance.id)
-            print(" Server " + name + "has id " + nova_instance['id']
             new_node = {}
             new_node['name'] = name;
             new_node['flavor'] = flavor;
