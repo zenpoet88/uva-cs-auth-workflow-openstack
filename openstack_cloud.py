@@ -1,6 +1,7 @@
 
 import os
 import time
+from datetime import datetime
 from keystoneauth1.exceptions import catalog
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
@@ -90,7 +91,7 @@ class OpenstackCloud:
         if found_image == None:
             str="Image not found: " + name 
             raise NameError(str)
-        print("Found image id: " + found_image['id'])
+        print("  Found image id: " + found_image['id'])
         return found_image
 
     def find_network_by_name(self,name):
@@ -106,22 +107,25 @@ class OpenstackCloud:
         if found_network == None:
             str="Network not found: " + name 
             raise NameError(str)
-        print("Found network id: " + found_network['id'])
+        print("  Found network id: " + found_network['id'])
         return found_network
 
 
 
-    def deploy_enterprise(self,enterprise):
+
+    def create_nodes(self,enterprise):
         ret = {} 
+
         ret['nodes']=[]
 
         ret['check_deploy_ok'] = self.check_deploy_ok(enterprise)
         if not ret['check_deploy_ok']:
-            print("Found that one or more nodes already exist, aborting deploy.")
+            print("  Found that one or more nodes already exist, aborting deploy.")
             return  ret
 
         for node in enterprise['nodes']:
             name = node['name']
+            print("Creating server named " + name)
             os_name = node['os']
             size = node.get('size', "small")
             domain = node.get('domain',"")
@@ -136,11 +140,10 @@ class OpenstackCloud:
             nova_flavor = self.nova_sess.flavors.find(name=flavor);
             nova_net = self.find_network_by_name(network)
             nova_nics = [{'net-id': nova_net['id']}]
-            print("Creating server named " + name)
             nova_instance = self.nova_sess.servers.create(name=name, image=nova_image, flavor=nova_flavor, key_name=keypair, nics=nova_nics)
-            time.sleep(5);
-            print(" Server " + name + " has id " + nova_instance.id)
+            print("  Server " + name + " has id " + nova_instance.id)
             nova_instance = self.nova_sess.servers.get(nova_instance.id)
+            print(dir(nova_instance))
             new_node = {}
             new_node['name'] = name;
             new_node['flavor'] = flavor;
@@ -152,12 +155,54 @@ class OpenstackCloud:
             new_node['network'] = network;
             new_node['keypair'] = keypair;
             new_node['nova_image'] = nova_image;
-            new_node['nova_flavor'] = nova_flavor;
             new_node['nova_nics'] = nova_nics;
-            new_node['nova_instance'] = nova_instance;
+            new_node['is_ready'] = False;
+            new_node['nova_status'] = nova_instance.status;
+            new_node['id'] = nova_instance.id;
             ret['nodes'].append(new_node)
+        return ret
+
+        
+    def wait_for_ready(self,enterprise, ret):
+        waiting = True
+        while waiting:
+            print("Waiting for instances to be ready. Sleeping 5 seconds...")
+            time.sleep(10)
+            waiting = False
+            for node in ret['nodes']:
+                id=node['id']
+                if not node['is_ready']: 
+                    nova_instance = self.nova_sess.servers.get(id)
+                    node['nova_status'] = nova_instance.status;
+                    if nova_instance.status == 'ACTIVE':
+                        print("Node " + node['name'] + " is ready!")
+                        node['is_ready'] = True;
+                    elif nova_instance.status == 'BUILD':
+                        waiting = True;
+                    else:
+                        str="Node " + node['name'] + " is neither BUILDing or ACTIVE.  Assuming error has occured.  Exiting...."
+                        raise RuntimeError(str)
+
+        print('All nodes are ready')
 
         return ret
+
+    def collect_info(self,enterprise,ret):
+        for node in ret['nodes']:
+            id=node['id']
+            nova_instance = self.nova_sess.servers.get(id)
+            node['password']=nova_instance.get_password()
+            node['addresses']=nova_instance.addresses
+
+        return ret
+
+
+    def deploy_enterprise(self,enterprise):
+        ret = self.create_nodes (enterprise)
+        ret = self.wait_for_ready(enterprise,ret)
+        ret = self.collect_info(enterprise,ret)
+        return ret
+
 
 
 

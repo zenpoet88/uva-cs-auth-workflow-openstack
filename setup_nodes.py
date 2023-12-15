@@ -1,7 +1,7 @@
 import sys
 import logging
 import json
-from datetime import date
+from datetime import datetime
 from openstack_cloud import OpenstackCloud
 
 
@@ -19,7 +19,7 @@ def load_configs(cloud_config_filename, enterprise_filename):
 
 def deploy_enterprise(cloud_config,enterprise):
     ret = {}
-    ret["deploy_start"] = str(date.today());
+    ret["deploy_start"] = str(datetime.now());
     match cloud_config['cloud_type'].lower():
         case 'openstack':
            print("Using openstack cloud") 
@@ -29,7 +29,7 @@ def deploy_enterprise(cloud_config,enterprise):
 
     ret['deployed'] = cloud.deploy_enterprise(enterprise)
 
-    ret["deploy_end"] = str(date.today());
+    ret["deploy_end"] = str(datetime.now());
     return ret
 
 def main():
@@ -39,7 +39,7 @@ def main():
         sys.exit(1)
 
     json_output = {}
-    json_output["start_time"] = str(date.today())
+    json_output["start_time"] = str(datetime.now())
     cloud_config_filename = sys.argv[1]
     enterprise_filename  = sys.argv[2]
     cloud_config,enterprise = load_configs(cloud_config_filename, enterprise_filename)
@@ -51,7 +51,7 @@ def main():
     json_output['backend_config'] = cloud_config;
     json_output['enterprise_to_build'] = enterprise;
     json_output['enterprise_built'] = enterprise_built;
-    json_output["end_time"] = str(date.today())
+    json_output["end_time"] = str(datetime.now())
 
     print("Enterprise built.  Writing output to output.json.")
     with open("output.json", "w") as f:
