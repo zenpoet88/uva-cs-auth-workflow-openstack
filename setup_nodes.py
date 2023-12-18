@@ -1,5 +1,4 @@
 import sys
-import logging
 import json
 from datetime import datetime
 from openstack_cloud import OpenstackCloud
@@ -61,8 +60,5 @@ def main():
 
 
 if __name__ == '__main__':
-    LOG = logging.getLogger(__name__)
-    LOG.setLevel(logging.INFO)
-    LOG.addHandler(logging.StreamHandler(sys.stdout))
     main()
 
