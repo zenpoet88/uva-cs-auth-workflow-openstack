@@ -28,5 +28,11 @@ or prompt the user for things like passwords (less preferred), etc.
 
 * 'size' - string. The size of parent opbject.
 
+* `roles` - array of string.  The roles this machine should play.  
+** `windows` -- register the instance with skms.  Specifies logins should be via password.
+** `domain_controller_leader` -- install a domain controller with a new forest for active directory.
+** `domain_controller` -- join an existing domain (requires a domain_controller_leader.
+** `linux` -- specifies login should be via ssh key.
+
 
 

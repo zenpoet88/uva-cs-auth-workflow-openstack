@@ -4,16 +4,14 @@
 		{ 
 			"name": "dc1",
 			"os": "win2k22",
-			"is_first_domain_controller": true,
 			"domain": "castle_domain",
-			"roles": [ "domain_controller_leader" ]
+			"roles": [ "domain_controller_leader", "windows" ]
 		},
 		{
 			"name": "dc2" ,
 			"os": "win2k22",
-			"is_additional_domain_controller": true,
 			"domain": "castle_domain",
-			"roles": [ "domain_controller" ]
+			"roles": [ "domain_controller", "windows" ]
 		},
 		{
 			"name": "winep1",

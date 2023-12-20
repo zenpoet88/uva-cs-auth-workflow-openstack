@@ -9,10 +9,9 @@ def load_output(output_filename):
         # Read the file
         output = json.load(f)
 
+    return output
 
-    return cloud_config, enterprise
-
-def cleanupy_enterprise(cloud_config,enterprise):
+def cleanup_enterprise(cloud_config,enterprise):
     ret = {}
     ret["cleanup_start"] = str(datetime.now());
     match cloud_config['cloud_type'].lower():
@@ -30,24 +29,23 @@ def cleanupy_enterprise(cloud_config,enterprise):
 def main():
 
     if len(sys.argv) != 2:
-        print("Usage:  python " + sys.argv[0] + " cloud_config.json output.json ")
+        print("Usage:  python " + sys.argv[0] + " output.json ")
         sys.exit(1)
 
-    cloud_config_filename = sys.argv[1]
-    output_filename = sys.argv[2]
+    output_filename = sys.argv[1]
     json_output = load_output(output_filename)
+    cloud_config = json_output['backend_config']
+    enterprise = json_output['enterprise_to_build']
     json_output["cleanup_start_time"] = str(datetime.now())
-    cloud_config,enterprise = load_configs(cloud_config_filename, enterprise_filename)
 
     print("Cleaning up nodes.")
     cleanup_results = cleanup_enterprise(cloud_config,enterprise)
     print("Cleaning up, completed.")
 
-    json_output['cleanup_backend_config'] = cloud_config;
     json_output['cleanup_results'] = cleanup_results;
-    json_output["cleanupend_time"] = str(datetime.now())
+    json_output["cleanup_end_time"] = str(datetime.now())
 
-    print("Enterprise cleaned.  Writing output to output.json.")
+    print("Enterprise cleaned.  Writing output to cleanup_output.json.")
     with open("cleanup_output.json", "w") as f:
         json.dump(json_output,f)
 

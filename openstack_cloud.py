@@ -1,4 +1,4 @@
-
+import argparse
 import os
 import time
 from datetime import datetime
@@ -10,6 +10,7 @@ from novaclient import client as nova_client
 from collections import defaultdict
 from neutronclient.v2_0 import client as neutronclient
 import glanceclient
+import openstack
 
 
 
@@ -18,14 +19,20 @@ class OpenstackCloud:
 
     def __init__(self, cloud_config):
         self.cloud_config = cloud_config
-        self.sess = OpenstackCloud.get_session()
-        self.nova_sess = nova_client.Client(version=2, session=self.sess)
+        self.sess = self.get_session()
+        self.nova_sess = nova_client.Client(version=2.4, session=self.sess)
         self.servers = self.query_servers()
         self.glclient = glanceclient.Client(version=2, session=self.sess)
         self.neutronClient = neutronclient.Client(session=self.sess)
 
-    def get_session():
+    def get_session(self):
+        options = argparse.ArgumentParser(description='Awesome OpenStack App')
+        self.conn = openstack.connect(options=options)
+
         """Return keystone session"""
+
+
+        
 
         # Extract environment variables set when sourcing the openstack RC file.
         user_domain = os.environ.get('OS_USER_DOMAIN_NAME')
@@ -34,6 +41,20 @@ class OpenstackCloud:
         project_id = os.environ.get('OS_PROJECT_ID')
         auth_url = os.environ.get('OS_AUTH_URL')
         domain_name = os.environ.get('OS_PROJECT_DOMAIN_NAME')
+
+        conn = openstack.connection.Connection(
+                region_name='RegionOne',
+                auth={
+                    "auth_url": auth_url,
+                    "username": user,
+                    "password": password,
+                    "project_id": project_id,
+                    "user_domain_name": user_domain
+                },
+                compute_api_verison='2',
+                identity_interface='internal',
+        )
+
 
         # Create user / password based authentication method.
         # https://goo.gl/VxD2FQ
@@ -46,6 +67,14 @@ class OpenstackCloud:
         # Create OpenStack keystoneauth1 session.
         # https://goo.gl/BE7YMt
         sess = session.Session(auth=auth)
+
+        conn = openstack.connection.Connection(
+                session=session,
+                region_name='RegionOne',
+                compute_api_version='2',
+                identity_interface='internal',
+                )
+
 
         return sess
 
@@ -120,8 +149,8 @@ class OpenstackCloud:
 
         ret['check_deploy_ok'] = self.check_deploy_ok(enterprise)
         if not ret['check_deploy_ok']:
-            print("  Found that one or more nodes already exist, aborting deploy.")
-            return  ret
+            errstr = "  Found that one or more nodes already exist, aborting deploy."
+            raise RuntimeError(errstr)
 
         for node in enterprise['nodes']:
             name = node['name']
@@ -134,16 +163,21 @@ class OpenstackCloud:
             image = self.os_to_image(os_name);
             flavor = self.size_to_flavor(os_name);
             security_group = self.cloud_config['security_group'];
+            all_groups = self.conn.list_security_groups({"name": security_group})
+            if not len(all_groups) == 1:
+                errstr = "Found 0 or more than 1 security groups called " + security_group + "\n" + str(all_groups)
+                raise RuntimeError(errstr)
+
             network = node.get('network',self.cloud_config['external_network']);
 
             nova_image = self.find_image_by_name(image);
             nova_flavor = self.nova_sess.flavors.find(name=flavor);
             nova_net = self.find_network_by_name(network)
             nova_nics = [{'net-id': nova_net['id']}]
-            nova_instance = self.nova_sess.servers.create(name=name, image=nova_image, flavor=nova_flavor, key_name=keypair, nics=nova_nics)
+            nova_instance = self.conn.create_server(name=name, image=image, flavor=flavor, key_name=keypair, security_groups=[security_group], nics=nova_nics)
             print("  Server " + name + " has id " + nova_instance.id)
             nova_instance = self.nova_sess.servers.get(nova_instance.id)
-            print(dir(nova_instance))
+            # print(dir(nova_instance))
             new_node = {}
             new_node['name'] = name;
             new_node['flavor'] = flavor;
@@ -180,19 +214,32 @@ class OpenstackCloud:
                     elif nova_instance.status == 'BUILD':
                         waiting = True;
                     else:
-                        str="Node " + node['name'] + " is neither BUILDing or ACTIVE.  Assuming error has occured.  Exiting...."
-                        raise RuntimeError(str)
+                        errstr = "Node " + node['name'] + " is neither BUILDing or ACTIVE.  Assuming error has occured.  Exiting...."
+                        raise RuntimeError(errstr)
 
         print('All nodes are ready')
 
         return ret
 
-    def collect_info(self,enterprise,ret):
-        for node in ret['nodes']:
-            id=node['id']
-            nova_instance = self.nova_sess.servers.get(id)
-            node['password']=nova_instance.get_password()
-            node['addresses']=nova_instance.addresses
+    def collect_info(self,enterprise,enterprise_built):
+        network = self.cloud_config['external_network'];
+        ret = enterprise_built
+        for node in enterprise_built['nodes']:
+            id = node['id']
+            name = node['name']
+            enterprise_node = next(filter( lambda x: name == x['name'], enterprise['nodes']))
+            if 'windows' not in enterprise_node['roles']: 
+                print("Skipping password retrieve for non-windows node " + name)
+                continue
+            while True:
+                nova_instance = self.nova_sess.servers.get(id)
+                node['password']=nova_instance.get_password(private_key=self.cloud_config['private_key_file'])
+                node['addresses']=nova_instance.addresses[network]
+                if node['password'] == '':
+                    print("Waiting for password for node " + name + ".")
+                    time.sleep(5)
+                else:
+                    break
 
         return ret
 
@@ -202,6 +249,16 @@ class OpenstackCloud:
         ret = self.wait_for_ready(enterprise,ret)
         ret = self.collect_info(enterprise,ret)
         return ret
+
+    def cleanup_enterprise(self,enterprise):
+        for node in enterprise['nodes']:
+            to_deploy_name = node['name']
+            for instance_key in self.servers:
+                instance_name=self.servers[instance_key]['name']
+                if to_deploy_name.strip() == instance_name.strip():
+                    print("Removing server " + instance_name + ".")
+                    nova_instance = self.nova_sess.servers.delete(self.servers[instance_key]['id'])
+
 
 
 

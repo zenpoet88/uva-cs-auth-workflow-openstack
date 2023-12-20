@@ -1,6 +1,7 @@
 {
 	"cloud_type": "openstack",
-	"os_env_file":	"~/openstack-bundles/stable/openstack-base/openrc",
+	"os_env_file":	"/home/jdh8d/openstack-bundles/stable/openstack-base/openrc",
+	"private_key_file":	"/home/jdh8d/.ssh/id_rsa",
 	"external_network": "ext_net",
 	"keypair": "jdhKeyPair",
 	"image_map":
@@ -13,5 +14,6 @@
 	{
 		"small": "m1.small"
 	},
-	"security_group": "All_Traffic"
+	"security_group": "All_Traffic",
+	"enterprise_url": "shen.os"
 }
