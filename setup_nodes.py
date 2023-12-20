@@ -65,44 +65,36 @@ def register_windows(cloud_config,enterprise,enterprise_built):
         
     return ret
 
-def setup_enterprise(cloud_config,enterprise,enterprise_built):
+def join_domains(cloud_config,enterprise,enterprise_built):
     ret={}
-    ret['windows_register'] = register_windows(cloud_config,enterprise,enterprise_built)
-#    ret['setup_domains'] = deploy_domain_controllers(cloud_config,to_build,built)
+    access_list=[]
+    nodes = list(filter(lambda x: 'windows' in x['roles'], enterprise['nodes']))
+    leader_details=enterprise_built['setup']['setup_domains']['domain_leaders']
+    for node in nodes:
+        name = node['name']
+        domain = node['domain']
+        print("  Joining domain on " + name)
+        ipv4_addr,password = extract_creds(enterprise_built,name)
+        access_list.append({"node": node, "domain_leader": leader_details, "addr": ipv4_addr, "password": str(password)})
+
+    # sequential
+    results = []
+    for access in access_list:
+        results.append(role_domains.join_domain(access))
+
+    # parallel
+    #results = Parallel(n_jobs=10)(delayed(role_domain.join_domain)(access) for access in access_list)
+
+    ret['join_domains']=results
+        
     return ret
 
-def main():
+def setup_enterprise(cloud_config,to_build,built):
+    ret={}
+    ret['windows_register'] = register_windows(cloud_config,to_build,built)
+    ret['setup_domains'] = deploy_domain_controllers(cloud_config,to_build,built)
+    return ret
 
-    if len(sys.argv) != 3:
-        print("Usage:  python " + sys.argv[0] + " cloud_config.json enterprise.json")
-        sys.exit(1)
-
-    json_output = {}
-    json_output["start_time"] = str(datetime.now())
-    cloud_config_filename = sys.argv[1]
-    enterprise_filename  = sys.argv[2]
-    cloud_config,enterprise = load_configs(cloud_config_filename, enterprise_filename)
-
-    print("Deploying nodes.")
-    enterprise_built = deploy_enterprise(cloud_config,enterprise)
-    print("Deploying nodes, completed.")
-
-    json_output['backend_config'] = cloud_config
-    json_output['enterprise_to_build'] = enterprise
-    json_output['enterprise_built'] = enterprise_built
-    print("Setting up nodes.")
-
-    json_setup_enterprise = setup_enterprise(cloud_config,enterprise,enterprise_built)
-    print("Setting up nodes, completed.")
-
-    json_output['setup'] = json_setup_enterprise
-    json_output["end_time"] = str(datetime.now())
-
-    print("Enterprise built.  Writing output to output.json.")
-    with open("output.json", "w") as f:
-        json.dump(json_output,f)
-
-    return
 
 
 def deploy_domain_controllers(cloud_config,enterprise,enterprise_built):
@@ -129,8 +121,45 @@ def deploy_domain_controllers(cloud_config,enterprise,enterprise_built):
         results=role_domains.add_domain_controller(cloud_config,leader_details[domain], name,ipv4_addr,password, domain)
         ret["additional_dc_setup_"+name]=results
         
-        
+    ret["domain_leaders"] = leader_details    
     return ret
+
+def main():
+
+    if len(sys.argv) != 3:
+        print("Usage:  python " + sys.argv[0] + " cloud_config.json enterprise.json")
+        sys.exit(1)
+
+    json_output = {}
+    try:
+        json_output["start_time"] = str(datetime.now())
+        cloud_config_filename = sys.argv[1]
+        enterprise_filename  = sys.argv[2]
+        cloud_config,enterprise = load_configs(cloud_config_filename, enterprise_filename)
+
+        print("Deploying nodes.")
+        enterprise_built = deploy_enterprise(cloud_config,enterprise)
+        print("Deploying nodes, completed.")
+
+        json_output['backend_config'] = cloud_config
+        json_output['enterprise_to_build'] = enterprise
+        print("Setting up nodes.")
+
+        json_setup_enterprise = setup_enterprise(cloud_config,enterprise,enterprise_built)
+        print("Setting up nodes, completed.")
+
+        enterprise_built['setup'] = json_setup_enterprise
+        json_output['enterprise_built'] = enterprise_built
+        json_output["end_time"] = str(datetime.now())
+
+        print("Enterprise built.  Writing output to output.json.")
+    except:
+        print("Exception occured while setting up enterprise.  Dumping results to output.json anyhow.")
+
+    with open("output.json", "w") as f:
+        json.dump(json_output,f)
+
+    return
 
 if __name__ == '__main__':
     # if args are passed, do main line.
@@ -147,9 +176,9 @@ if __name__ == '__main__':
     to_build=output['enterprise_to_build']
     cloud_config=output['backend_config']
 
-    domain_info = deploy_domain_controllers(cloud_config,to_build,built)
+    join_ret = join_domains(cloud_config,to_build,built)
 
-    output['setup']['setup_domains'] = domain_info
+    output['setup']['join_domains'] = join_ret
 
     with open("dev_output.json", "w") as f:
         json.dump(output,f)

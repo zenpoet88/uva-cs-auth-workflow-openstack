@@ -1,11 +1,8 @@
 import argparse
 import os
 import time
-from datetime import datetime
-from keystoneauth1.exceptions import catalog
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
-from keystoneclient.v3 import client as keystone_client
 from novaclient import client as nova_client
 from collections import defaultdict
 from neutronclient.v2_0 import client as neutronclient
@@ -40,20 +37,7 @@ class OpenstackCloud:
         password = os.environ.get('OS_PASSWORD')
         project_id = os.environ.get('OS_PROJECT_ID')
         auth_url = os.environ.get('OS_AUTH_URL')
-        domain_name = os.environ.get('OS_PROJECT_DOMAIN_NAME')
-
-        conn = openstack.connection.Connection(
-                region_name='RegionOne',
-                auth={
-                    "auth_url": auth_url,
-                    "username": user,
-                    "password": password,
-                    "project_id": project_id,
-                    "user_domain_name": user_domain
-                },
-                compute_api_verison='2',
-                identity_interface='internal',
-        )
+        # domain_name = os.environ.get('OS_PROJECT_DOMAIN_NAME')
 
 
         # Create user / password based authentication method.
@@ -67,14 +51,6 @@ class OpenstackCloud:
         # Create OpenStack keystoneauth1 session.
         # https://goo.gl/BE7YMt
         sess = session.Session(auth=auth)
-
-        conn = openstack.connection.Connection(
-                session=session,
-                region_name='RegionOne',
-                compute_api_version='2',
-                identity_interface='internal',
-                )
-
 
         return sess
 
@@ -171,7 +147,7 @@ class OpenstackCloud:
             network = node.get('network',self.cloud_config['external_network']);
 
             nova_image = self.find_image_by_name(image);
-            nova_flavor = self.nova_sess.flavors.find(name=flavor);
+            # nova_flavor = self.nova_sess.flavors.find(name=flavor);
             nova_net = self.find_network_by_name(network)
             nova_nics = [{'net-id': nova_net['id']}]
             nova_instance = self.conn.create_server(name=name, image=image, flavor=flavor, key_name=keypair, security_groups=[security_group], nics=nova_nics)
@@ -257,7 +233,7 @@ class OpenstackCloud:
                 instance_name=self.servers[instance_key]['name']
                 if to_deploy_name.strip() == instance_name.strip():
                     print("Removing server " + instance_name + ".")
-                    nova_instance = self.nova_sess.servers.delete(self.servers[instance_key]['id'])
+                    self.nova_sess.servers.delete(self.servers[instance_key]['id'])
 
 
 

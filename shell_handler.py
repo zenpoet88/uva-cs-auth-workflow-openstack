@@ -1,5 +1,5 @@
 import paramiko
-import re
+import sys
 
 
 class ShellHandler:
@@ -16,7 +16,7 @@ class ShellHandler:
     def __del__(self):
         self.ssh.close()
 
-    def execute_cmd(self, cmd):
+    def execute_cmd(self, cmd, verbose=False):
         """
 
         :param cmd: the command to be executed on the remote computer
@@ -26,13 +26,38 @@ class ShellHandler:
         """
 
         stdin,stdout,stderr = self.ssh.exec_command(cmd, bufsize=4096)
-        exit_status = stdout.channel.recv_exit_status()
-        lines = stdout.readlines()
-        return lines, stderr.readlines(), exit_status 
+        stdout_lines = [] 
+        stderr_lines = [] 
+        while not stdout.channel.exit_status_ready():
+            stdout_newlines=stdout.readlines()
+            stdout_lines.append(stdout_newlines)
+            stderr_newlines=stderr.readlines()
+            stderr_lines.append(stderr_newlines)
+            if verbose:
+                for line in stdout_newlines:
+                    print(line)
+                for line in stderr_newlines:
+                    print(line)
+        
 
-    def execute_powershell(self, cmd):
-        quoted_cmd = cmd.replace("\\", "\\\\").replace('"', '\\"')
+        exit_status = stdout.channel.recv_exit_status()
+        stdout_newlines=stdout.readlines()
+        stdout_lines.append(stdout_newlines)
+        stderr_newlines=stderr.readlines()
+        stderr_lines.append(stderr_newlines)
+        if verbose:
+            for line in stdout_newlines:
+                print(line)
+            for line in stderr_newlines:
+                print(line)
+        return stdout_lines, stderr_lines, exit_status 
+
+    def execute_powershell(self, cmd, verbose=False, exit=False):
+        quoted_cmd = cmd.replace('\\"', '\\"').replace("\\'", "\\").replace('"', '\\"')
         new_cmd = 'powershell -c "' + quoted_cmd + '"'
-        print("Quoted powershell command:" + new_cmd)
-        return self.execute_cmd(new_cmd)
+        if verbose:
+            print("Quoted powershell command:" + new_cmd)
+        if exit:
+            sys.exit(1)
+        return self.execute_cmd(new_cmd, verbose=verbose)
 

@@ -1,4 +1,3 @@
-import paramiko
 from shell_handler import ShellHandler
 
 def register_windows_instance(obj):

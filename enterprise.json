@@ -4,38 +4,38 @@
 		{ 
 			"name": "dc1",
 			"os": "win2k22",
-			"domain": "castle_domain",
+			"domain": "castle",
 			"roles": [ "domain_controller_leader", "windows" ]
 		},
 		{
 			"name": "dc2" ,
 			"os": "win2k22",
-			"domain": "castle_domain",
+			"domain": "castle",
 			"roles": [ "domain_controller", "windows" ]
 		},
 		{
 			"name": "winep1",
 			"os": "win2k22",
-			"domain": "castle_domain",
+			"domain": "castle",
 			"roles": [ "endpoint", "windows" ]
 
 		},
 		{
 			"name": "winep2",
 			"os": "win2k22",
-			"domain": "castle_domain",
+			"domain": "castle",
 			"roles": [ "endpoint", "windows" ]
 		},
 		{
 			"name": "linep3",
 			"os": "jammy",
-			"domain": "castle_domain",
+			"domain": "castle",
 			"roles": [ "endpoint", "linux" ]
 		},
 		{
 			"name": "linep4",
 			"os": "jammy",
-			"domain": "castle_domain",
+			"domain": "castle",
 			"roles": [ "endpoint", "linux" ]
 		}
 	]
