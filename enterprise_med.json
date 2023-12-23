@@ -69,6 +69,18 @@
 			"roles": [ "endpoint", "windows" ]
 		},
 		{
+			"name": "winep9",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep10",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
 			"name": "linep1",
 			"os": "jammy",
 			"domain": "castle",
@@ -112,6 +124,18 @@
 		},
 		{
 			"name": "linep8",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep9",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep10",
 			"os": "jammy",
 			"domain": "castle",
 			"roles": [ "endpoint", "linux" ]
