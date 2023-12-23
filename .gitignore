@@ -3,3 +3,4 @@
 *.swp
 output.json
 dev_output.json
+cleanup_output.json

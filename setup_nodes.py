@@ -1,3 +1,4 @@
+import traceback
 import sys
 import json
 import role_register
@@ -38,10 +39,15 @@ def deploy_enterprise(cloud_config,enterprise):
 def extract_creds(enterprise_built,name):
     details = next(filter( lambda x: name == x['name'], enterprise_built['deployed']['nodes']))
     addresses = details['addresses']
-    password = details['password']
     ipv4_addr = addresses[0]['addr']
     print("  ipv4 addr: " + str(ipv4_addr))
-    print("  password: " + str(password))
+
+    if 'password' in details:
+        password = details['password']
+        print("  password: " + str(password))
+    else:
+        password = None
+        print("  password: No password set")
     return ipv4_addr,password
 
 def register_windows(cloud_config,enterprise,enterprise_built):
@@ -68,32 +74,35 @@ def register_windows(cloud_config,enterprise,enterprise_built):
 def join_domains(cloud_config,enterprise,enterprise_built):
     ret={}
     access_list=[]
-    nodes = list(filter(lambda x: 'windows' in x['roles'], enterprise['nodes']))
+    nodes = list(filter(lambda x: 'endpoint' in x['roles'], enterprise['nodes']))
     leader_details=enterprise_built['setup']['setup_domains']['domain_leaders']
     for node in nodes:
         name = node['name']
         domain = node['domain']
-        print("  Joining domain on " + name)
+        if domain == None: 
+            print("No domain (" + str(domain) + ") to join for " + name)
+            continue
+        print("Joining domain on " + name)
         ipv4_addr,password = extract_creds(enterprise_built,name)
-        access_list.append({"node": node, "domain_leader": leader_details, "addr": ipv4_addr, "password": str(password)})
+        access_list.append({"cloud_config": cloud_config, "node": node, "domain_leader": leader_details[domain], "addr": ipv4_addr, "password": str(password), 'domain': domain })
 
     # sequential
-    results = []
-    for access in access_list:
-        results.append(role_domains.join_domain(access))
+    #results = []
+    #for access in access_list:
+    #    results.append(role_domains.join_domain(access))
 
     # parallel
-    #results = Parallel(n_jobs=10)(delayed(role_domain.join_domain)(access) for access in access_list)
+    results = Parallel(n_jobs=10)(delayed(role_domains.join_domain)(access) for access in access_list)
 
     ret['join_domains']=results
         
     return ret
 
 def setup_enterprise(cloud_config,to_build,built):
-    ret={}
-    ret['windows_register'] = register_windows(cloud_config,to_build,built)
-    ret['setup_domains'] = deploy_domain_controllers(cloud_config,to_build,built)
-    return ret
+    built['setup']={}
+    built['setup']['windows_register'] = register_windows(cloud_config,to_build,built)
+    built['setup']['setup_domains'] = deploy_domain_controllers(cloud_config,to_build,built)
+    built['setup']['join_domains'] = join_domains(cloud_config,to_build,built)
 
 
 
@@ -109,7 +118,7 @@ def deploy_domain_controllers(cloud_config,enterprise,enterprise_built):
         #access_list.append({"name": name})
         #access_list.append({"name": name, "addr": ipv4_addr})
         results=role_domains.deploy_forest(cloud_config,name,ipv4_addr,password, domain)
-        leader_details[domain]={"name": name, "addr":ipv4_addr, "admin_pass": password}
+        leader_details[domain]={"name": str(name), "addr": [ipv4_addr], "admin_pass": str(password)}
         ret["forest_setup_"+name]=results
 
     followers = list(filter(lambda x: 'domain_controller' in x['roles'], enterprise['nodes']))
@@ -119,6 +128,7 @@ def deploy_domain_controllers(cloud_config,enterprise,enterprise_built):
         print("Setting up domain controller on " + name + ' for domain ' + domain)
         ipv4_addr,password = extract_creds( enterprise_built,name)
         results=role_domains.add_domain_controller(cloud_config,leader_details[domain], name,ipv4_addr,password, domain)
+        leader_details[domain]['addr'].append(ipv4_addr)
         ret["additional_dc_setup_"+name]=results
         
     ret["domain_leaders"] = leader_details    
@@ -145,15 +155,15 @@ def main():
         json_output['enterprise_to_build'] = enterprise
         print("Setting up nodes.")
 
-        json_setup_enterprise = setup_enterprise(cloud_config,enterprise,enterprise_built)
+        setup_enterprise(cloud_config,enterprise,enterprise_built)
         print("Setting up nodes, completed.")
 
-        enterprise_built['setup'] = json_setup_enterprise
         json_output['enterprise_built'] = enterprise_built
         json_output["end_time"] = str(datetime.now())
 
         print("Enterprise built.  Writing output to output.json.")
     except:
+        traceback.print_exc()
         print("Exception occured while setting up enterprise.  Dumping results to output.json anyhow.")
 
     with open("output.json", "w") as f:
@@ -178,7 +188,7 @@ if __name__ == '__main__':
 
     join_ret = join_domains(cloud_config,to_build,built)
 
-    output['setup']['join_domains'] = join_ret
+    output['enterprise_built']['setup']['join_domains'] = join_ret
 
     with open("dev_output.json", "w") as f:
         json.dump(output,f)

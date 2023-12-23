@@ -1,0 +1,120 @@
+{
+	"nodes":
+	[
+		{ 
+			"name": "dc1",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller_leader", "windows" ]
+		},
+		{
+			"name": "dc2" ,
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller", "windows" ]
+		},
+		{
+			"name": "dc3" ,
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller", "windows" ]
+		},
+		{
+			"name": "winep1",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+
+		},
+		{
+			"name": "winep2",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep3",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep4",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep5",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep6",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep7",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep8",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "linep1",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep2",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep3",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep4",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep5",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep6",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep7",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep8",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		}
+	]
+}

@@ -25,6 +25,8 @@ class ShellHandler:
                     execute('cd folder_name')
         """
 
+        if verbose:
+            print("Final cmd to execute:" + cmd)
         stdin,stdout,stderr = self.ssh.exec_command(cmd, bufsize=4096)
         stdout_lines = [] 
         stderr_lines = [] 
@@ -56,7 +58,7 @@ class ShellHandler:
         quoted_cmd = cmd.replace('\\"', '\\"').replace("\\'", "\\").replace('"', '\\"')
         new_cmd = 'powershell -c "' + quoted_cmd + '"'
         if verbose:
-            print("Quoted powershell command:" + new_cmd)
+            print("Unquoted command for powershell:" + cmd)
         if exit:
             sys.exit(1)
         return self.execute_cmd(new_cmd, verbose=verbose)

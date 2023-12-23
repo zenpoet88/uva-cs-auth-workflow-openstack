@@ -204,13 +204,14 @@ class OpenstackCloud:
             id = node['id']
             name = node['name']
             enterprise_node = next(filter( lambda x: name == x['name'], enterprise['nodes']))
+            nova_instance = self.nova_sess.servers.get(id)
+            node['addresses']=nova_instance.addresses[network]
             if 'windows' not in enterprise_node['roles']: 
                 print("Skipping password retrieve for non-windows node " + name)
                 continue
             while True:
                 nova_instance = self.nova_sess.servers.get(id)
                 node['password']=nova_instance.get_password(private_key=self.cloud_config['private_key_file'])
-                node['addresses']=nova_instance.addresses[network]
                 if node['password'] == '':
                     print("Waiting for password for node " + name + ".")
                     time.sleep(5)
