@@ -1,0 +1,265 @@
+{
+	"nodes":
+	[
+		{ 
+			"name": "dc1",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller_leader", "windows" ]
+		},
+		{
+			"name": "dc2" ,
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller", "windows" ]
+		},
+		{
+			"name": "dc3" ,
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller", "windows" ]
+		},
+		{
+			"name": "winep1",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+
+		},
+		{
+			"name": "winep2",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep3",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep4",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep5",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep6",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep7",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep8",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep9",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep10",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep11",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+
+		},
+		{
+			"name": "winep12",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep13",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep14",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep15",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep16",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep17",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep18",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep19",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "winep20",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "endpoint", "windows" ]
+		},
+		{
+			"name": "linep1",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep2",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep3",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep4",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep5",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep6",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep7",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep8",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep9",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep10",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep11",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep12",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep13",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep14",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep15",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep16",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep17",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep18",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep19",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		},
+		{
+			"name": "linep20",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux" ]
+		}
+	]
+}
