@@ -151,6 +151,7 @@ class OpenstackCloud:
             nova_net = self.find_network_by_name(network)
             nova_nics = [{'net-id': nova_net['id']}]
             nova_instance = self.conn.create_server(name=name, image=image, flavor=flavor, key_name=keypair, security_groups=[security_group], nics=nova_nics)
+            time.sleep(5)
             print("  Server " + name + " has id " + nova_instance.id)
             nova_instance = self.nova_sess.servers.get(nova_instance.id)
             # print(dir(nova_instance))

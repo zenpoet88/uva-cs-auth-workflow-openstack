@@ -35,8 +35,10 @@ def deploy_forest(cloud_config,name,ipv4_addr,password,domain):
     print("  Waiting for reboot (Expect socket closed by peer messages).")
     time.sleep(10)
     status_received = False
-    while not status_received:
+    attempts = 0
+    while not status_received and attempts < 60:
         try:
+            attempts += 1
             shell = ShellHandler(ipv4_addr,user,password)
             stdout2,stderr2,exit_status2 = shell.execute_powershell("get-addomain", verbose=verbose)
             if 'Attempting to perform the' in str(stdout2): 
@@ -45,8 +47,10 @@ def deploy_forest(cloud_config,name,ipv4_addr,password,domain):
             else:
                 status_received=True
         except paramiko.ssh_exception.SSHException:
+            time.sleep(2)
             pass
         except paramiko.ssh_exception.NoValidConnectionsError:
+            time.sleep(2)
             pass
 
     if not 'ReplicaDirectoryServers' in str(stdout2):
@@ -100,14 +104,18 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
     print("  Waiting for reboot (Expect socket closed by peer messages).")
     time.sleep(10)
     status_received = False
-    while not status_received:
+    attempts = 0
+    while not status_received and attempts < 60:
         try:
+            attempts += 1
             shell = ShellHandler(ipv4_addr,user,leader_admin_password)
             stdout2,stderr2,exit_status2 = shell.execute_powershell("get-addomain", verbose=verbose)
             status_received=True
         except paramiko.ssh_exception.SSHException:
+            time.sleep(2)
             pass
         except paramiko.ssh_exception.NoValidConnectionsError:
+            time.sleep(2)
             pass
 
     if not 'ReplicaDirectoryServers' in str(stdout2):
@@ -190,14 +198,18 @@ def join_domain_windows(name, leader_admin_password, ipv4_addr, domain_ips, fqdn
     print("  Waiting for reboot (Expect socket closed by peer messages).")
     time.sleep(10)
     status_received = False
-    while not status_received:
+    attempts=0
+    while not status_received and attempts < 60:
         try:
+            attempts += 1
             shell = ShellHandler(ipv4_addr,domain_name+'\\'+user,leader_admin_password)
             stdout2,stderr2,exit_status2 = shell.execute_powershell('echo "the domain is $env:userdomain" ', verbose=verbose)
             status_received=True
         except paramiko.ssh_exception.SSHException:
+            time.sleep(2)
             pass
         except paramiko.ssh_exception.NoValidConnectionsError:
+            time.sleep(2)
             pass
     print("  Reboot Completed by verifying computer is in the domain");
     if not 'the domain is {}'.format(domain_name.upper()) in str(stdout2):

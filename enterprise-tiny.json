@@ -17,26 +17,31 @@
 			"name": "winep1",
 			"os": "win2k22",
 			"domain": "castle",
-			"roles": [ "endpoint", "windows" ]
+			"roles": [ "endpoint", "windows" , "personal"],
+			"user": "power user"
 
 		},
 		{
 			"name": "winep2",
 			"os": "win2k22",
 			"domain": "castle",
-			"roles": [ "endpoint", "windows" ]
+			"roles": [ "endpoint", "windows", "personal" ],
+			"user": "standard user"
 		},
 		{
 			"name": "linep3",
 			"os": "jammy",
 			"domain": "castle",
-			"roles": [ "endpoint", "linux" ]
+			"roles": [ "endpoint", "linux", "personal" ],
+			"user": "standard user"
 		},
 		{
 			"name": "linep4",
 			"os": "jammy",
 			"domain": "castle",
-			"roles": [ "endpoint", "linux" ]
+			"roles": [ "endpoint", "linux", "shared" ]
+			"user": "admin user"
 		}
-	]
+	],
+
 }
