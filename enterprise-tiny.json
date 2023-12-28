@@ -39,9 +39,9 @@
 			"name": "linep4",
 			"os": "jammy",
 			"domain": "castle",
-			"roles": [ "endpoint", "linux", "shared" ]
+			"roles": [ "endpoint", "linux", "shared" ],
 			"user": "admin user"
 		}
-	],
+	]
 
 }
