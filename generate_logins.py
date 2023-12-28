@@ -5,7 +5,6 @@ import password
 import sys
 import json
 from datetime import datetime, timedelta
-from joblib import Parallel, delayed
 
 from faker import Faker
 
@@ -114,7 +113,6 @@ def simulate_session(term_no, day_to_simulate,user, enterprise):
 
     hours_worked = random.randint(int(min_hours_worked), int(max_hours_worked))
     start_hour = random.randint(int(start_hour_min),int(start_hour_max))
-    parallel_logins = login_profile['terminals_open']
 
     for hour_no in range(0,hours_worked-1):
         logins_this_hour = probabilistic_round(random.randint(int(logins_per_hour_min),int(logins_per_hour_max))/2.0)
@@ -185,11 +183,6 @@ def create_users(user_roles, enterprise):
             raise RuntimeError(errstr)
         role = role[0]
         user_nodes = list(filter(lambda node: 'user' in node, enterprise['nodes']))
-        user_id = ''.join(
-            [random.choice(string.ascii_letters ) for _ in range(3)] +
-            [random.choice(string.digits)] +
-            [random.choice(string.ascii_letters ) for _ in range(random.choice([2,3]))]
-            ).lower()
         private_key,public_key= generate_new_rsa_key()
         user_profile=fake.profile()
         user_profile['password']=password.generate_password(7+int(random.choice(string.digits)))
