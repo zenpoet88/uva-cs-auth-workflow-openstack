@@ -15,10 +15,16 @@ def deploy_forest(cloud_config,name,ipv4_addr,password,domain):
     print("Setting safe-mode password for domain to " + password)
 
     cmd=(
-        'Install-windowsfeature AD-domain-services ; '
-        'Import-Module ADDSDeployment ;  '
-        '$secure=ConvertTo-SecureString -asplaintext -string {} -force ; '
-        'Install-ADDSForest -domainname {} -SafeModeAdministratorPassword $secure -verbose -NoRebootOnCompletion:$true -Force:$true  '
+        "Install-windowsfeature AD-domain-services ; "
+        "Import-Module ADDSDeployment ;  "
+        "$secure=ConvertTo-SecureString -asplaintext -string {} -force ; "
+        "Install-ADDSForest -domainname {} -SafeModeAdministratorPassword $secure -verbose -NoRebootOnCompletion:$true -Force:$true ; "
+        "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
+        "Expand-Archive .\python.zip; "
+        "mv python c:\\ ; "
+        "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
+        "$newpath = \"$oldpath;C:\python\" ; "
+        "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath "
         ).format( domain_safe_mode_password,domain_name)
 
 
@@ -85,7 +91,13 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
         "$passwd = convertto-securestring -AsPlainText -Force -String '{}' ; "
         "$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist '{}\\administrator',$passwd ; "
         "$secure=ConvertTo-SecureString -asplaintext -string '{}' -force ; "
-        "Install-ADDSDomainController -DomainName {} -SafeModeAdministratorPassword $secure -verbose -NoRebootOnCompletion:$true  -confirm:$false -credential $cred"
+        "Install-ADDSDomainController -DomainName {} -SafeModeAdministratorPassword $secure -verbose -NoRebootOnCompletion:$true  -confirm:$false -credential $cred; "
+        "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
+        "Expand-Archive .\python.zip; "
+        "mv python c:\\ ; "
+        "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
+        "$newpath = \"$oldpath;C:\python\" ; "
+        "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath "
         ).format( leader_ip, leader_admin_password, domain_name, domain_safe_mode_password,domain_name)
 
 
@@ -179,7 +191,13 @@ def join_domain_windows(name, leader_admin_password, ipv4_addr, domain_ips, fqdn
         "$passwd = convertto-securestring -AsPlainText -Force -String {} ; "
         "$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist '{}\\administrator',$passwd ; "
         "Set-DnsClientServerAddress -serveraddress ({}) -interfacealias 'Ethernet Instance 0' ; "
-        "Add-Computer -Credential $cred -domainname {}" 
+        "Add-Computer -Credential $cred -domainname {};" 
+        "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
+        "Expand-Archive .\python.zip; "
+        "mv python c:\\ ; "
+        "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
+        "$newpath = \"$oldpath;C:\python\" ; "
+        "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath "
 
         ).format(leader_admin_password, domain_name, domain_ips, fqdn_domain_name)
 
@@ -238,7 +256,7 @@ def join_domain_linux(name, leader_admin_password, ipv4_addr, domain_ips, fqdn_d
         "sudo netplan apply "
         ).format(domain_ips_formated, netplan_config_path)
 
-    install_packages_cmd="sudo apt update && sudo env DEBIAN_FRONTEND=noninteractive apt install -y chrony krb5-user realmd sssd sssd-tools adcli samba-common-bin"
+    install_packages_cmd="sudo apt update && sudo env DEBIAN_FRONTEND=noninteractive apt install -y python-is-python3 chrony krb5-user realmd sssd sssd-tools adcli samba-common-bin"
 
     set_chrony_command=(
         "sudo sed -i '/pool ntp.ubuntu.com        iburst maxsources 4/i pool {}        iburst maxsources 5' {} ; "
@@ -312,3 +330,39 @@ def join_domain_linux(name, leader_admin_password, ipv4_addr, domain_ips, fqdn_d
                 "join_domain": {"stdout": stdout, "stderr": stderr, "exit_status": exit_status},
                 "verify_join_domain": {"stdout": stdout2, "stderr": stderr2, "exit_status": exit_status2}
             }
+
+def deploy_users(users,built):
+    deploy_users={}
+    domain_leaders=built['setup']['setup_domains']['domain_leaders']
+
+    domain_commands={}
+    for user in users:
+        username = user['user_profile']['username']
+        domain=user['domain']
+        print("Preparing to install user " + username + " in domain " + domain)
+        install_one_user=(
+                '$secure=ConvertTo-SecureString -asplaintext -string "{}" -force; '
+                'New-ADUser -samaccountname "{}" -name "{}" -accountpassword $secure  -enabled $true'
+                ).format(user['user_profile']['password'], user['user_profile']['username'], user['user_profile']['name'])
+        if domain in domain_commands:
+            domain_commands[domain] += '; ' + install_one_user
+        else:
+            domain_commands[domain] = install_one_user
+
+    deploy_users['cmds']=domain_commands;
+    deploy_users['add_users']={}
+
+    for domain in domain_commands:
+        print("Installing users for domain " + domain)
+        cmd=domain_commands[domain]
+        controller_name = domain_leaders[domain]['name']
+        controller_addr = domain_leaders[domain]['addr'][0]
+        domain_password = domain_leaders[domain]['admin_pass']
+        print("  controller name,addr:" + controller_name + "(" + controller_addr + ")")
+        qualified_username='administrator@'+domain
+        shell = ShellHandler(controller_addr,qualified_username,domain_password)
+        stdout,stderr,exit_status = shell.execute_powershell(cmd, verbose=verbose)
+        deploy_users['add_users'][domain]={ "cmd": cmd, "stdout": stdout, "stderr": stderr, "exit_status": exit_status}
+
+    return deploy_users;
+

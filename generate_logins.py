@@ -4,6 +4,7 @@ import string
 import password
 import sys
 import json
+import role_domains
 from datetime import datetime, timedelta
 
 from faker import Faker
@@ -34,7 +35,8 @@ def generate_new_rsa_key():
 
 
 
-def load_configs(user_roles_filename, enterprise_filename):
+def load_configs(user_roles_filename, enterprise_filename, output_filename):
+    built=None
     with open(user_roles_filename) as f:
         # Read the file
         user_roles = json.load(f)
@@ -42,23 +44,30 @@ def load_configs(user_roles_filename, enterprise_filename):
     with open(enterprise_filename) as f:
         # Read the file
         enterprise =  json.load(f)
-    return user_roles,enterprise
+
+    if output_filename != None:
+        with open(output_filename) as f:
+            # Read the file
+            output =  json.load(f)
+            built=output['enterprise_built']
+    return user_roles,enterprise,built
 
 def probabilistic_round(x):
     return int(math.floor(x + random.random()))
 
 
-def simulate_login(term_no, day_to_work, hour_to_work,user, enterprise, from_node='the internet'):
-    start_hour = day_to_work+timedelta(hours=hour_to_work) +timedelta(minutes=random.randint(0,59))
+def simulate_login(term_no, login_start_time, login_length_seconds, user, enterprise, from_node='the internet'):
     shared_nodes = list(filter(lambda node: 'shared' in node['roles'], enterprise['nodes']))
     endpoint_nodes = list(filter(lambda node: 'endpoint' in node['roles'], enterprise['nodes']))
     login_profile = user['login_profile']
     home_node = user['home_node']['name']
+    login_end_time = login_start_time + timedelta(seconds=login_length_seconds)
 
     login={
             "user": user['user_profile']['username'],
-            "session_start": start_hour,
-            "session_length": random.randint(1,120)
+            "login_start": login_start_time,
+            "login_end": login_end_time,
+            "login_length": login_length_seconds
             }
 
     to_node = None
@@ -74,9 +83,16 @@ def simulate_login(term_no, day_to_work, hour_to_work,user, enterprise, from_nod
             to_node=random.choice(endpoint_nodes)['name']
 
     recursions_no = random.choice(range(int(login_profile['recursive_logins_max'])))
+
+    # not long enough to recurse
+    if login_length_seconds == 1:
+        recursions_no = 0
     recursive_logins=[]
     for _ in range(0,recursions_no-1):
-        recursive_login = simulate_login(None, day_to_work,hour_to_work,user,enterprise,to_node)
+        recursive_start_time = login_start_time + timedelta(seconds=random.randint(1,login_length_seconds - 1))
+        remaining_duration = (login_end_time - recursive_start_time).total_seconds()
+        recursive_length_seconds = random.randint(1,remaining_duration)
+        recursive_login = simulate_login(None, recursive_start_time,recursive_length_seconds,user, enterprise,to_node)
         recursive_logins.append(recursive_login)
         
 
@@ -91,13 +107,24 @@ def simulate_login(term_no, day_to_work, hour_to_work,user, enterprise, from_nod
     return login
 
 
-def simulate_hour(term_no, day_to_work, hour_to_work,logins_this_hour,user, enterprise):
+def simulate_hour(term_no, day_to_work, hour_to_work,user, enterprise):
+
     logins=[]
+
+    login_profile = user['login_profile']
+    logins_per_hour_min=login_profile['activity_min_logins_per_hour']
+    logins_per_hour_max=login_profile['activity_max_logins_per_hour']
+    logins_this_hour = probabilistic_round(random.randint(int(logins_per_hour_min),int(logins_per_hour_max))/2.0)
+
     for login_no in range(0,logins_this_hour - 1):
-        logins.append(simulate_login(term_no, day_to_work, hour_to_work, user, enterprise))
+        start_second = day_to_work+timedelta(hours=hour_to_work) + timedelta(seconds=random.randint(0,3600))
+        login_length_second = random.randint(1,120*60)
+        login_sequence = simulate_login(term_no, start_second, login_length_second, user, enterprise)
+        logins.append(login_sequence)
+
     return logins
 
-def simulate_session(term_no, day_to_simulate,user, enterprise):
+def simulate_terminal_day(term_no, day_to_simulate,user, enterprise):
     session=[]
     login_profile = user['login_profile']
 
@@ -107,33 +134,29 @@ def simulate_session(term_no, day_to_simulate,user, enterprise):
     start_hour_min=login_profile['day_start_hour_min']
     start_hour_max=login_profile['day_start_hour_max']
 
-    logins_per_hour_min=login_profile['activity_min_logins_per_hour']
-    logins_per_hour_max=login_profile['activity_max_logins_per_hour']
-
 
     hours_worked = random.randint(int(min_hours_worked), int(max_hours_worked))
     start_hour = random.randint(int(start_hour_min),int(start_hour_max))
 
     for hour_no in range(0,hours_worked-1):
-        logins_this_hour = probabilistic_round(random.randint(int(logins_per_hour_min),int(logins_per_hour_max))/2.0)
         hour_to_work = start_hour + hour_no
         if hour_to_work > 24:
             break
-        logins=simulate_hour(term_no,day_to_simulate, hour_to_work,logins_this_hour,user, enterprise)
+        logins=simulate_hour(term_no,day_to_simulate, hour_to_work,user, enterprise)
         session += logins
 
     return session
 
 def simulate_user_day(day_to_simulate,user, enterprise):
-    sessions=[]
+    terminals=[]
     login_profile = user['login_profile']
     parallel_logins = login_profile['terminals_open']
 
     for term_no in range(1,int(parallel_logins)):
-        session = simulate_session(term_no, day_to_simulate,user, enterprise)
-        sessions += session
+        terminal = simulate_terminal_day(term_no, day_to_simulate,user, enterprise)
+        terminals += terminal
     
-    return sessions
+    return terminals
 
 def simulate_day(day_to_simulate,users, enterprise):
         day={}
@@ -174,6 +197,7 @@ def create_users(user_roles, enterprise):
 
     for user_node in user_nodes:
         user_role_name = user_node['user']
+        domain_name = user_node['domain']
         role = list(filter(lambda role: user_role_name == role['name'], all_roles))
         if len(role) == 0:
             errstr=("Found no role specification for node " + user_node['name'])
@@ -190,36 +214,52 @@ def create_users(user_roles, enterprise):
                 "user_profile": user_profile,
                 "login_profile":  role,
                 "ssh_key": { "private_key": private_key, "public_key": public_key },
-                "home_node": user_node
+                "home_node": user_node,
+                "domain": domain_name
                 }
-        print("Generated user: " + user['user_profile']['username'])
+        print("Generated user: " + user['user_profile']['username'] + ", pass: " + user['user_profile']['password'])
         users.append(user)
     return users
 
 
 def main():
-
-
     start_date=datetime.today()
     days_to_simulate=10
 
-
-    if len(sys.argv) != 3:
-        print("Usage:  python " + sys.argv[0] + " user-roles.json enterprise.json")
+    if len(sys.argv) != 3 and len(sys.argv) != 4:
+        print("Usage:  python " + sys.argv[0] + " user-roles.json enterprise.json [output.json]")
         sys.exit(1)
 
+
+    # setup output
     json_output = {}
     json_output["start_time"] = str(datetime.now())
     json_output["simulation_start"] = str(start_date)
     json_output["simulation_end"] = str(start_date+timedelta(days=days_to_simulate))
+
+
+    # read config files
     user_roles_filename = sys.argv[1]
     enterprise_filename  = sys.argv[2]
-    user_roles,enterprise = load_configs(user_roles_filename, enterprise_filename)
-    users=create_users(user_roles,enterprise)
-    logins=simulate_logins(start_date, days_to_simulate, users, enterprise)
+    output_filename = None
+    if len(sys.argv) == 4:
+        output_filename = sys.argv[3]
+    user_roles,enterprise,built = load_configs(user_roles_filename, enterprise_filename, output_filename)
 
+    # create users
+    users=create_users(user_roles,enterprise)
     json_output['users']=users
+
+    # create login pattern
+    logins=simulate_logins(start_date, days_to_simulate, users, enterprise)
     json_output['logins']=logins
+
+
+    # deploy users to domain if given info
+    if not output_filename == None:
+        deploy_users = role_domains.deploy_users(users,built)
+        json_output['deploy_users']=deploy_users
+
     json_output["end_time"] = str(datetime.now())
 
     with open("logins.json", "w") as f:
