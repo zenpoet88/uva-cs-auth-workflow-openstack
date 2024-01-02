@@ -56,7 +56,13 @@ def probabilistic_round(x):
     return int(math.floor(x + random.random()))
 
 
-def simulate_login(term_no, login_start_time, login_length_seconds, user, enterprise, from_node='the internet'):
+def simulate_login(term_no, login_start_time, login_length_seconds, user, enterprise, from_node=None):
+    if from_node == None:
+        from_node = { 
+                "ip": fake.ipv4() ,
+                "mac": fake.mac_address() 
+                }
+
     shared_nodes = list(filter(lambda node: 'shared' in node['roles'], enterprise['nodes']))
     endpoint_nodes = list(filter(lambda node: 'endpoint' in node['roles'], enterprise['nodes']))
     login_profile = user['login_profile']
@@ -74,13 +80,13 @@ def simulate_login(term_no, login_start_time, login_length_seconds, user, enterp
     while to_node == None or to_node == from_node:
         if random.random() < float(login_profile['fraction_of_logins_to_personal_machine']):
             # going to home node!
-            to_node=home_node
+            to_node={"node": home_node}
         elif random.random() < float(login_profile['fraction_of_non_personal_logins_to_shared_machines']):
             # going to shared node
-            to_node=random.choice(shared_nodes)['name']
+            to_node={"node": random.choice(shared_nodes)['name'] }
         else:
             # not going to personal nor shared node
-            to_node=random.choice(endpoint_nodes)['name']
+            to_node={"node": random.choice(endpoint_nodes)['name'] }
 
     recursions_no = random.choice(range(int(login_profile['recursive_logins_max'])))
 
@@ -88,7 +94,7 @@ def simulate_login(term_no, login_start_time, login_length_seconds, user, enterp
     if login_length_seconds == 1:
         recursions_no = 0
     recursive_logins=[]
-    for _ in range(0,recursions_no-1):
+    for _ in range(recursions_no):
         recursive_start_time = login_start_time + timedelta(seconds=random.randint(1,login_length_seconds - 1))
         remaining_duration = (login_end_time - recursive_start_time).total_seconds()
         recursive_length_seconds = random.randint(1,remaining_duration)
@@ -116,7 +122,7 @@ def simulate_hour(term_no, day_to_work, hour_to_work,user, enterprise):
     logins_per_hour_max=login_profile['activity_max_logins_per_hour']
     logins_this_hour = probabilistic_round(random.randint(int(logins_per_hour_min),int(logins_per_hour_max))/2.0)
 
-    for login_no in range(0,logins_this_hour - 1):
+    for login_no in range(logins_this_hour):
         start_second = day_to_work+timedelta(hours=hour_to_work) + timedelta(seconds=random.randint(0,3600))
         login_length_second = random.randint(1,120*60)
         login_sequence = simulate_login(term_no, start_second, login_length_second, user, enterprise)
@@ -138,7 +144,7 @@ def simulate_terminal_day(term_no, day_to_simulate,user, enterprise):
     hours_worked = random.randint(int(min_hours_worked), int(max_hours_worked))
     start_hour = random.randint(int(start_hour_min),int(start_hour_max))
 
-    for hour_no in range(0,hours_worked-1):
+    for hour_no in range(hours_worked):
         hour_to_work = start_hour + hour_no
         if hour_to_work > 24:
             break
@@ -172,7 +178,7 @@ def simulate_logins(start_date,days_to_simulate,users, enterprise):
     logins={}
     logins['days']={}
 
-    for i in range(0,days_to_simulate-1):
+    for i in range(days_to_simulate):
         day_to_simulate = start_date + timedelta(days=i)
         daystr  = day_to_simulate.strftime('%A, %m/%d/%Y')
         print("Simulating day " + daystr)
@@ -183,7 +189,6 @@ def simulate_logins(start_date,days_to_simulate,users, enterprise):
     return logins
 
 def create_users(user_roles, enterprise):
-    fake = Faker()
     users=[]
     user_nodes = list(filter(lambda node: 'user' in node, enterprise['nodes']))
     print("User nodes are " + str(list(map(lambda node: node['name'], user_nodes) )))
@@ -268,7 +273,7 @@ def main():
     return
 
 if __name__ == '__main__':
-    # if args are passed, do main line.
-        sys.exit(main())
+    fake = Faker()
+    sys.exit(main())
 
 

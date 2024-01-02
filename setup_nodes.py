@@ -173,7 +173,7 @@ def main():
 
 if __name__ == '__main__':
     # if args are passed, do main line.
-    if len(sys.argv) == 3:
+    if len(sys.argv) != 1:
         sys.exit(main())
 
 
