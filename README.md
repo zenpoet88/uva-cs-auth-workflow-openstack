@@ -39,7 +39,7 @@ your own configuration.
 Next, you can generate logins for the deployed infrastrcuture:
 
 ```
-$ python ./generate_logins.py  user-roles.json enterprise-tiny.json
+$ python ./simulate_logins.py  user-roles.json enterprise-tiny.json
 ```
 
 This generates users and estimates a login behavior for these users based on settings in the enterprise.json file
