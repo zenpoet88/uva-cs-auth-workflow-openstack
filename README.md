@@ -5,12 +5,18 @@ Also included is the ability to simulate workloads on the deployed infrastructur
 
 ## Usage
 
-Written in python, make sure you have dependencies setup properly.
+
+### Site Configuration
+
+Written in python and assumes to be running on Linux, make sure you have dependencies setup properly.
 
 ```
 $ ./setup.sh
 $ pip install -r requirements.txt
 ```
+
+
+### Infrastructure Setup
 
 Then, you can generate an enterprise:
 
@@ -28,6 +34,8 @@ two Openstack deployments at UVA.  While this is setup to support any cloud infr
 only Openstack is currently supported.  See [cloud_config.md](./cloud_config.md) for more details about writing
 your own configuration.
 
+### Simulation
+
 Next, you can generate logins for the deployed infrastrcuture:
 
 ```
@@ -40,12 +48,17 @@ See additional details on the user-roles in [user-roles.md](./user-roles.md).
 Output is written to logins.json, used in later stages.
 
 
+### Emulation
+
 Next, you can emulate the simulated logins:
 
 ```
 $ python ./generate_logins.py  enterprise-tiny.json logins.json
 ```
 More description TBD, still in development.
+
+
+### Cleanup
 
 Lastly, cleanup/destroy the infrastructure:
 
