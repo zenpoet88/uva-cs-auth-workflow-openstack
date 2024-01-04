@@ -166,7 +166,7 @@ def main():
         traceback.print_exc()
         print("Exception occured while setting up enterprise.  Dumping results to output.json anyhow.")
 
-    with open("output.json", "w") as f:
+    with open("setup-output.json", "w") as f:
         json.dump(json_output,f)
 
     return
@@ -177,21 +177,21 @@ if __name__ == '__main__':
         sys.exit(main())
 
 
-    # otherwise do development of next step.
-    with open("output.json") as f:
-        # Read the file
-        output = json.load(f)
-
-    built=output['enterprise_built']
-    to_build=output['enterprise_to_build']
-    cloud_config=output['backend_config']
-
-    join_ret = join_domains(cloud_config,to_build,built)
-
-    output['enterprise_built']['setup']['join_domains'] = join_ret
-
-    with open("dev_output.json", "w") as f:
-        json.dump(output,f)
-
+#    # otherwise do development of next step.
+#    with open("output.json") as f:
+#        # Read the file
+#        output = json.load(f)
+#
+#    built=output['enterprise_built']
+#    to_build=output['enterprise_to_build']
+#    cloud_config=output['backend_config']
+#
+#    join_ret = join_domains(cloud_config,to_build,built)
+#
+#    output['enterprise_built']['setup']['join_domains'] = join_ret
+#
+#    with open("dev_output.json", "w") as f:
+#        json.dump(output,f)
+#
 
 

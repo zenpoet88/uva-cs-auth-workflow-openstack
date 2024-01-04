@@ -6,7 +6,7 @@ from password import generate_password
 
 
 domain_safe_mode_password = generate_password(12)
-verbose = True # False
+verbose = False
 
 def deploy_forest(cloud_config,name,ipv4_addr,password,domain):
 

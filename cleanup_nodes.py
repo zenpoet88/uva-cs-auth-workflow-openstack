@@ -45,7 +45,7 @@ def main():
     json_output['cleanup_results'] = cleanup_results;
     json_output["cleanup_end_time"] = str(datetime.now())
 
-    print("Enterprise cleaned.  Writing output to cleanup_output.json.")
+    print("Enterprise cleaned.  Writing output to cleanup-output.json.")
     with open("cleanup_output.json", "w") as f:
         json.dump(json_output,f)
 
