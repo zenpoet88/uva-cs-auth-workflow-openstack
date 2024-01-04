@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 import time, sys, os, json
 from shell_handler import ShellHandler
 from datetime import datetime, timezone
