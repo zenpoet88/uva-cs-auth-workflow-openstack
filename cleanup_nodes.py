@@ -29,7 +29,7 @@ def cleanup_enterprise(cloud_config,enterprise):
 def main():
 
     if len(sys.argv) != 2:
-        print("Usage:  python " + sys.argv[0] + " output.json ")
+        print("Usage:  python " + sys.argv[0] + " setup-output.json ")
         sys.exit(1)
 
     output_filename = sys.argv[1]

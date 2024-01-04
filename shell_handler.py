@@ -1,20 +1,34 @@
 import paramiko
 import sys
+import socket
 
 
 class ShellHandler:
 
-    def __init__(self, host, user, psw):
+    def __init__(self, host, user, password, from_ip:str = None):
+
+        self.sock = None
+        if not from_ip == None:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.bind((from_ip, 0))           # set source address
+            self.sock.connect((host, 22))       # connect to the destination address
+
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh.connect(host, username=user, password=psw, port=22)
+        self.ssh.connect(host, username=user, password=password, port=22, sock=self.sock)
+        self.sftp = self.ssh.open_sftp()
 
-        channel = self.ssh.invoke_shell()
-        self.stdin = channel.makefile('wb')
-        self.stdout = channel.makefile('r')
+
+        #channel = self.ssh.invoke_shell()
+        #self.stdin = channel.makefile('wb')
+        #self.stdout = channel.makefile('r')
 
     def __del__(self):
+
         self.ssh.close()
+        #self.channel.close()
+        if not self.sock == None:
+            self.sock.close()
 
     def execute_cmd(self, cmd, verbose=False):
         """
@@ -31,10 +45,11 @@ class ShellHandler:
         stdout_lines = [] 
         stderr_lines = [] 
         while not stdout.channel.exit_status_ready():
+            #print('next iter')
             stdout_newlines=stdout.readlines()
-            stdout_lines.append(stdout_newlines)
+            stdout_lines += stdout_newlines
             stderr_newlines=stderr.readlines()
-            stderr_lines.append(stderr_newlines)
+            stderr_lines += stderr_newlines
             if verbose:
                 for line in stdout_newlines:
                     print(line)
@@ -43,10 +58,12 @@ class ShellHandler:
         
 
         exit_status = stdout.channel.recv_exit_status()
-        stdout_newlines=stdout.readlines()
-        stdout_lines.append(stdout_newlines)
-        stderr_newlines=stderr.readlines()
-        stderr_lines.append(stderr_newlines)
+        stdout_newlines=stdout.readlines() #[ line for line in stdout.readlines() if line != [] ]
+        stdout_lines += stdout_newlines
+        stderr_newlines=stderr.readlines() # [ line for line in stderr.readlines() if line != [] ]
+        stderr_lines += stderr_newlines
+        #print('stdout lines = ' + str(len(stdout_lines)))
+        #print('stderr lines = ' + str(len(stderr_lines)))
         if verbose:
             for line in stdout_newlines:
                 print(line)
@@ -63,3 +80,6 @@ class ShellHandler:
             sys.exit(1)
         return self.execute_cmd(new_cmd, verbose=verbose)
 
+    def put_file(self, src_filename:str, dst_filename:str, verbose:bool= False):
+        self.sftp.put(src_filename,dst_filename)
+        return

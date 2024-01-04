@@ -1,6 +1,5 @@
-import socket, time, sys, os
-import paramiko
-import json
+import time, sys, os, json
+from shell_handler import ShellHandler
 from datetime import datetime, timezone
 
 # faker stuff
@@ -27,7 +26,7 @@ def emulate_login(login, user_data, built):
         raise RuntimeError("Cannot get from IP for initial connection")
 
 
-    duration = login['login_length']
+    #duration = login['login_length']
     ip_str= login_from['ip']
     mac= login_from['mac']
     to_node_name = login_to['node']
@@ -39,15 +38,15 @@ def emulate_login(login, user_data, built):
 
     # print("user:" + json.dumps(user_data,indent=2))
     user = next(filter(lambda user: login['user'] == user['user_profile']['username'], user_data))
-    password=user['user_profile']['password']
     username = user['user_profile']['username']
+    fq_username=f"{username}@{domain}"
+    password=user['user_profile']['password']
     #print("Password = " + password)
 
     mac=fake.mac_address() 
     dev='v'+mac.replace(':','')
 
     print(f"At {datetime.now()}, connecting from ip {ip_str} with mac {mac}")
-
 
     add_command = ( 
             'sudo modprobe dummy ; ' 
@@ -65,39 +64,41 @@ def emulate_login(login, user_data, built):
             'sudo ip link delete ' + dev + ' type dummy'
             )
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    sock.bind((ip_str, 0))           # set source address
-    sock.connect((targ_ip, 22))       # connect to the destination address
 
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    fq_username=f"{username}@{domain}"
+    shell = ShellHandler(targ_ip,fq_username,password=password, from_ip=ip_str)
+
+    #sock.bind((ip_str, 0))           # set source address
+    #sock.connect((targ_ip, 22))       # connect to the destination address
+
+    #client = paramiko.SSHClient()
+    #client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print(f"Logging in to {targ_ip} as {fq_username} with password {password}.")
-    client.connect(targ_ip,
-                   username=fq_username,
-                   password=password,
-                   sock=sock)
+    #client.connect(targ_ip,
+    #               username=fq_username,
+    #               password=password,
+    #               sock=sock)
 
-    channel = client.invoke_shell()
-
-
-    #cmd='bash -i -c "last -10 -i|grep still\\ log"'
-    cmd="whoami; python -c 'import time; time.sleep( " + str(duration) + ")' ; echo job completed $RANDOM"
-    stdin,stdout,stderr = client.exec_command(cmd, bufsize=4096)
-
-    exit_status = stdout.channel.recv_exit_status()
+    #channel = client.invoke_shell()
 
 
-    #print("Executing cmd on " + targ_ip + ": " + cmd)
-    #print("stdout=" + str(stdout.readlines()[0]))
+    #cmd=(
+    #        f'python -c "import time; import getpass; duration={str(duration)}; '
+    #        'print(f\'{getpass.getuser()} sleeping for {duration} seconds \'); time.sleep(duration)"'
+    #        )
+    cmd='echo ' + json.dumps(login) + " > action.json  "
+    # print("Executing cmd on " + targ_ip + ": " + cmd)
+    stdout,stderr, exit_status = shell.execute_cmd(cmd, verbose=False)
+
+    pscmd ='python -c "import json;  print(json.dumps(json.load(open(\'action.json\',\'r\'))))"'
+
+    stdout2,stderr2, exit_status2 = shell.execute_powershell(pscmd, verbose=False)
+
 
     os.system(del_command)
 
-    channel.close()
-    client.close()
-    sock.close()
-    login_results.append({ "stdout": stdout.readlines(), "stderr": stderr.readlines(), "login": login, "exit_status": exit_status })
+    login_results.append({ "cmd": cmd, "stdout": [stdout, stdout2], "stderr": [stderr,stderr2], "login": login, "exit_status": [ exit_status, exit_status2 ]  })
     return
 
 def load_json_file(name: str):
@@ -164,6 +165,7 @@ def main():
 
     with open("logins-output.json", "w") as f:
         json.dump(output,f, default=str)
+    print("Emulation complete.  Results written to logins-output.json")
 
     return 0
 

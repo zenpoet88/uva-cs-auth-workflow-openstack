@@ -93,20 +93,24 @@ def simulate_login(term_no, login_start_time, login_length_seconds, user, enterp
     # not long enough to recurse
     if login_length_seconds == 1:
         recursions_no = 0
-    recursive_logins=[]
+    actions=[]
+
     for _ in range(recursions_no):
         recursive_start_time = login_start_time + timedelta(seconds=random.randint(1,login_length_seconds - 1))
         remaining_duration = (login_end_time - recursive_start_time).total_seconds()
         recursive_length_seconds = random.randint(1,remaining_duration)
         recursive_login = simulate_login(None, recursive_start_time,recursive_length_seconds,user, enterprise,to_node)
-        recursive_logins.append(recursive_login)
+        action={}
+        action['type']='recursive_login'
+        action['recure']=recursive_login
+        actions.append(action)
         
 
     login['from']=from_node
     login['to']=to_node
     login['terminal']=term_no
-    if len(recursive_logins) > 0:
-        login['recursive']=recursive_logins
+    if len(actions) > 0:
+        login['actions']=actions
 
     # to do, handle recursive logins.
     # if random.random() <  login_fraction

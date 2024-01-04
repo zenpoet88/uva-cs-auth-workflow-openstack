@@ -6,7 +6,7 @@ from password import generate_password
 
 
 domain_safe_mode_password = generate_password(12)
-verbose = False
+verbose = True # False
 
 def deploy_forest(cloud_config,name,ipv4_addr,password,domain):
 
@@ -22,6 +22,7 @@ def deploy_forest(cloud_config,name,ipv4_addr,password,domain):
         "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
         "Expand-Archive .\python.zip; "
         "mv python c:\\ ; "
+        "icacls \"c:\\python\" /grant:r \"users:(RX)\" /C ; "
         "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
         "$newpath = \"$oldpath;C:\python\" ; "
         "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath "
@@ -95,6 +96,7 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
         "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
         "Expand-Archive .\python.zip; "
         "mv python c:\\ ; "
+        "icacls \"c:\\python\" /grant:r \"users:(RX)\" /C ; "
         "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
         "$newpath = \"$oldpath;C:\python\" ; "
         "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath "
@@ -195,6 +197,7 @@ def join_domain_windows(name, leader_admin_password, ipv4_addr, domain_ips, fqdn
         "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
         "Expand-Archive .\python.zip; "
         "mv python c:\\ ; "
+        "icacls \"c:\\python\" /grant:r \"users:(RX)\" /C ; "
         "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
         "$newpath = \"$oldpath;C:\python\" ; "
         "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath "
