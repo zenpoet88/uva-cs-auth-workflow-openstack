@@ -3,7 +3,7 @@
 
 import time, sys, os, json
 from shell_handler import ShellHandler
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # faker stuff
 from faker import Faker
@@ -12,9 +12,14 @@ from faker import Faker
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 
+
+# global variables
+login_results = []
+fake = Faker()
+nowish = datetime.now() 
 scheduler = BackgroundScheduler()
 
-
+# functions
 
 def emulate_login(login, user_data, built):
 
@@ -30,39 +35,38 @@ def emulate_login(login, user_data, built):
 
 
     #duration = login['login_length']
-    ip_str= login_from['ip']
+    from_ip_str= login_from['ip']
     mac= login_from['mac']
     to_node_name = login_to['node']
     node = next(filter(lambda node: to_node_name == node['name'], built['deployed']['nodes']))
     #print("To node:" + json.dumps(node,indent=2))
     domain=node['domain']
     targ_ip=node['addresses'][0]['addr']
-    #print(f"To node domain, ip = {domain}, {ipv4}")
 
     # print("user:" + json.dumps(user_data,indent=2))
     user = next(filter(lambda user: login['user'] == user['user_profile']['username'], user_data))
     username = user['user_profile']['username']
     fq_username=f"{username}@{domain}"
     password=user['user_profile']['password']
-    #print("Password = " + password)
 
     mac=fake.mac_address() 
     dev='v'+mac.replace(':','')
 
-    print(f"At {datetime.now()}, connecting from ip {ip_str} with mac {mac}")
+    print(f"At {datetime.now()}, connecting from ip {from_ip_str} with mac {mac}")
+    print(f"To ip = {targ_ip}, user = {username}@{domain}, password = {password}")
 
     add_command = ( 
             'sudo modprobe dummy ; ' 
             'sudo ip link add ' + dev +' type dummy ; ' 
             'sudo ifconfig ' + dev + ' hw ether ' + mac + ' ; '
-            'sudo ip addr add ' + ip_str+'/32' + ' dev ' + dev + ' ; '
+            'sudo ip addr add ' + from_ip_str+'/32' + ' dev ' + dev + ' ; '
             'sudo ip link set dev ' + dev + ' up'
             )
 
     # print("add-dummy-nic cmd: " + add_command)
     os.system(add_command)
 
-    #        'sudo ip addr del ' + ip_str+'/32' + ' dev ' + dev + ' ; ' 
+    #        'sudo ip addr del ' + from_ip_str+'/32' + ' dev ' + dev + ' ; ' 
     del_command = (
             'sudo ip link delete ' + dev + ' type dummy'
             )
@@ -70,9 +74,9 @@ def emulate_login(login, user_data, built):
     #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-    shell = ShellHandler(targ_ip,fq_username,password=password, from_ip=ip_str)
+    shell = ShellHandler(targ_ip,fq_username,password=password, from_ip=from_ip_str)
 
-    #sock.bind((ip_str, 0))           # set source address
+    #sock.bind((from_ip_str, 0))           # set source address
     #sock.connect((targ_ip, 22))       # connect to the destination address
 
     #client = paramiko.SSHClient()
@@ -121,7 +125,8 @@ def flatten_logins(logins):
     return flat_logins
 
 
-def schedule_logins(logins_file, setup_output_file):
+def schedule_logins(logins_file, setup_output_file, fast_debug = False):
+    global nowish
     users = logins_file['users']
     flat_logins = flatten_logins(logins_file['logins'])
     executors = {
@@ -131,6 +136,11 @@ def schedule_logins(logins_file, setup_output_file):
 
 
     for login in flat_logins:
+        if fast_debug: 
+            nowish +=  timedelta(seconds=3)
+            login['login_start'] = str(nowish)
+            login['login_length'] = 3
+
         job_start = login['login_start']
         job_start = datetime.strptime(job_start, '%Y-%m-%d %H:%M:%S.%f')
         scheduler.add_job( emulate_login, 'date', run_date=job_start, kwargs={'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built']})
@@ -140,26 +150,32 @@ def schedule_logins(logins_file, setup_output_file):
 
 
 def main():
-    if len(sys.argv) != 3:
-        print(f"Usage: python {sys.argv[0]} output.json logins.json")
+    if len(sys.argv) != 3 and len(sys.argv) != 4:
+        print(f"Usage: python {sys.argv[0]} setup-output.json logins.json ( --fast-debug )" )
         sys.exit(1)
+
+    fast_debug = (len(sys.argv) == 4)
+
     output={}
     output['start_time']=str(datetime.now())
     setup_output_file = load_json_file(sys.argv[1])
     logins_file = load_json_file(sys.argv[2])
 
-    scheduler = schedule_logins(logins_file, setup_output_file)
+    scheduler = schedule_logins(logins_file, setup_output_file, fast_debug = fast_debug)
 
     scheduler.start()
 
 
 
-    while len(scheduler.get_jobs()) > 0:
-        wakeup_time = scheduler.get_jobs()[0].next_run_time
-        seconds_to_wakeup=(wakeup_time - datetime.now(timezone.utc)).total_seconds()
-        print(f"Next job at {wakeup_time}, {seconds_to_wakeup} from now.")
-        sleep_time=max(5,seconds_to_wakeup/2)
-        time.sleep(sleep_time)
+    try:
+        while len(scheduler.get_jobs()) > 0:
+            wakeup_time = scheduler.get_jobs()[0].next_run_time
+            seconds_to_wakeup=(wakeup_time - datetime.now(timezone.utc)).total_seconds()
+            print(f"Next job at {wakeup_time}, {seconds_to_wakeup} from now.")
+            sleep_time=max(5,seconds_to_wakeup/2)
+            time.sleep(sleep_time)
+    except KeyboardInterrupt:
+        print("Shutting down early due to keyboard interrupt.")
 
     scheduler.shutdown();
 
@@ -173,11 +189,8 @@ def main():
     return 0
 
 
+
 if __name__ == '__main__':
-    login_results = []
-    fake = Faker()
-    #logging.basicConfig()
-    #logging.getLogger('apscheduler').setLevel(logging.DEBUG)
     sys.exit(main())
 
 
