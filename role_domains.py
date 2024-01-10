@@ -85,7 +85,14 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
     print('  domain-controller leader: ' + leader_ip)
     print('  domain-controller password: ' + leader_admin_password)
 
-    cmd=(
+    pycmd=(
+        "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
+        "Expand-Archive .\python.zip; "
+        "mv python c:\\ ; "
+        "icacls \"c:\\python\" /grant:r \"users:(RX)\" /C ; "
+        )
+
+    adcmd =(
         "Install-windowsfeature AD-domain-services ; "
         "Import-Module ADDSDeployment ;  "
         "Set-DnsClientServerAddress -serveraddress ('{}') -interfacealias 'Ethernet Instance 0' ; "
@@ -93,27 +100,46 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
         "$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist '{}\\administrator',$passwd ; "
         "$secure=ConvertTo-SecureString -asplaintext -string '{}' -force ; "
         "Install-ADDSDomainController -DomainName {} -SafeModeAdministratorPassword $secure -verbose -NoRebootOnCompletion:$true  -confirm:$false -credential $cred; "
-        "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
-        "Expand-Archive .\python.zip; "
-        "mv python c:\\ ; "
-        "icacls \"c:\\python\" /grant:r \"users:(RX)\" /C ; "
         "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
         "$newpath = \"$oldpath;C:\python\" ; "
         "Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath "
         ).format( leader_ip, leader_admin_password, domain_name, domain_safe_mode_password,domain_name)
 
-
     if verbose:
         print("  Register as domain comtroller command:" + cmd)
 
     shell = ShellHandler(ipv4_addr,user,password)
-    stdout,stderr,exit_status = shell.execute_powershell(cmd,verbose=verbose)
+    stdout2,stderr2,exit_status2 = shell.execute_powershell(pycmd,verbose=verbose)
+    stdout = [stdout2]
+    stderr = [stderr2]
+    exit_status = [exit_status2]
+    attempts = 0 
+    while attempts < 10:
+        attempts += 1 
+
+        stdout2,stderr2,exit_status2 = shell.execute_powershell(adcmd,verbose=verbose)
+
+        stdout.append(stdout2)
+        stderr.append(stderr2)
+        exit_status.append(exit_status2)
+        
+        # stop if successful
+        if not 'A domain controller could not be contacted' in str(stderr2) and  not 'A domain controller could not be contacted' in str(stdout2):
+            break;
+        print(str(stdout2))
+        print(str(stderr2))
+        print("Domain controler registration failed, retrying")
 
     try:
         shell = ShellHandler(ipv4_addr,user,password)
         shell.execute_powershell('Restart-computer -force', verbose=verbose)
+    # we expect a forced reboot  to end in a socket error because the socket will
+    # forceably disconnect as the machine reboots.
     except socket.error:
         pass
+
+    print(str(stdout))
+    print(str(stderr))
 
     print("  Waiting for reboot (Expect socket closed by peer messages).")
     time.sleep(10)
@@ -125,6 +151,9 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
             shell = ShellHandler(ipv4_addr,user,leader_admin_password)
             stdout2,stderr2,exit_status2 = shell.execute_powershell("get-addomain", verbose=verbose)
             status_received=True
+            stdout.append(stdout2)
+            stderr.append(stderr2)
+            exit_status.append(exit_status2)
         except paramiko.ssh_exception.SSHException:
             time.sleep(2)
             pass
@@ -132,11 +161,15 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
             time.sleep(2)
             pass
 
-    if not 'ReplicaDirectoryServers' in str(stdout2):
-        print("add-dc-stdout:" + str(stdout))
-        print("add-dc-stderr:" + str(stderr))
-        print("verify-stdout:" + str(stdout2))
-        print("verify-stderr:" + str(stderr2))
+    if not "stdout2" in locals() or not 'ReplicaDirectoryServers' in str(stdout2):
+        if "stdout" in locals():
+            print("add-dc-stdout:" + str(stdout))
+        if "stderr" in locals():
+            print("add-dc-stderr:" + str(stderr))
+        if "stdout2" in locals():
+            print("verify-stdout:" + str(stdout2))
+        if "stderr2" in locals():
+            print("verify-stderr:" + str(stderr2))
         errstr = 'Cannot get domain information from ' + name
         raise RuntimeError(errstr)
 

@@ -164,10 +164,10 @@ def main():
         json_output['enterprise_built'] = enterprise_built
         json_output["end_time"] = str(datetime.now())
 
-        print("Enterprise built.  Writing output to output.json.")
+        print("Enterprise built.  Writing output to setup-output.json.")
     except:
         traceback.print_exc()
-        print("Exception occured while setting up enterprise.  Dumping results to output.json anyhow.")
+        print("Exception occured while setting up enterprise.  Dumping results to setup-output.json anyhow.")
 
     with open("setup-output.json", "w") as f:
         json.dump(json_output,f)
