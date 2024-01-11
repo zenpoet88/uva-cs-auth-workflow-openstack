@@ -54,10 +54,10 @@ def deploy_forest(cloud_config,name,ipv4_addr,password,domain):
             else:
                 status_received=True
         except paramiko.ssh_exception.SSHException:
-            time.sleep(2)
+            time.sleep(5)
             pass
         except paramiko.ssh_exception.NoValidConnectionsError:
-            time.sleep(2)
+            time.sleep(5)
             pass
 
     if not 'ReplicaDirectoryServers' in str(stdout2):
@@ -99,6 +99,7 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
         "$passwd = convertto-securestring -AsPlainText -Force -String '{}' ; "
         "$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist '{}\\administrator',$passwd ; "
         "$secure=ConvertTo-SecureString -asplaintext -string '{}' -force ; "
+        "sleep 60; "
         "Install-ADDSDomainController -DomainName {} -SafeModeAdministratorPassword $secure -verbose -NoRebootOnCompletion:$true  -confirm:$false -credential $cred; "
         "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
         "$newpath = \"$oldpath;C:\python\" ; "
@@ -106,7 +107,7 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
         ).format( leader_ip, leader_admin_password, domain_name, domain_safe_mode_password,domain_name)
 
     if verbose:
-        print("  Register as domain comtroller command:" + cmd)
+        print("  Register as domain comtroller command:" + adcmd)
 
     shell = ShellHandler(ipv4_addr,user,password)
     stdout2,stderr2,exit_status2 = shell.execute_powershell(pycmd,verbose=verbose)
@@ -115,8 +116,11 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
     exit_status = [exit_status2]
     attempts = 0 
     while attempts < 10:
+        shell = ShellHandler(ipv4_addr,user,password)
         attempts += 1 
-
+#        if name == 'dc3':
+#            print('adcmd='+ str(adcmd))
+#            sys.exit(1)
         stdout2,stderr2,exit_status2 = shell.execute_powershell(adcmd,verbose=verbose)
 
         stdout.append(stdout2)
@@ -126,9 +130,13 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
         # stop if successful
         if not 'A domain controller could not be contacted' in str(stderr2) and  not 'A domain controller could not be contacted' in str(stdout2):
             break;
-        print(str(stdout2))
-        print(str(stderr2))
-        print("Domain controler registration failed, retrying")
+        print("Domain controler registration failed, rebooting and retrying (Expect socket error messages)")
+        #print(str(stdout2 + stderr2))
+        shell.execute_powershell('Restart-computer -force', verbose=verbose)
+        time.sleep(60)
+
+    if attempts > 9:
+        raise RuntimeError("Could not join domain on machine " + name)
 
     try:
         shell = ShellHandler(ipv4_addr,user,password)
@@ -137,9 +145,6 @@ def add_domain_controller(cloud_config,leader_details,name,ipv4_addr,password,do
     # forceably disconnect as the machine reboots.
     except socket.error:
         pass
-
-    print(str(stdout))
-    print(str(stderr))
 
     print("  Waiting for reboot (Expect socket closed by peer messages).")
     time.sleep(10)
