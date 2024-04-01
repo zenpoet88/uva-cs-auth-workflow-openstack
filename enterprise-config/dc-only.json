@@ -1,0 +1,18 @@
+{
+	"nodes":
+	[
+		{ 
+			"name": "dc1",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller_leader", "windows" ]
+		},
+		{
+			"name": "dc2" ,
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller", "windows" ]
+		}
+	]
+
+}
