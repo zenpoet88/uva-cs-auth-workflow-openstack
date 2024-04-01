@@ -79,6 +79,9 @@ class OpenstackCloud:
         return True
 
     def os_to_image(self,os_name):
+
+        if not os_name in self.cloud_config['image_map']:
+                return os_name
         return self.cloud_config['image_map'][os_name]
 
     def size_to_flavor(self,size_name):
