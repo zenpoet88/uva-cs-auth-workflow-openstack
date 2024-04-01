@@ -4,6 +4,7 @@ import time
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
 from novaclient import client as nova_client
+from designateclient.v2 import client as designate_client
 from collections import defaultdict
 from neutronclient.v2_0 import client as neutronclient
 import glanceclient
@@ -21,6 +22,7 @@ class OpenstackCloud:
         self.servers = self.query_servers()
         self.glclient = glanceclient.Client(version=2, session=self.sess)
         self.neutronClient = neutronclient.Client(session=self.sess)
+        self.designateClient = designate_client.Client(session=self.sess)
 
     def get_session(self):
         options = argparse.ArgumentParser(description='Awesome OpenStack App')
@@ -37,7 +39,6 @@ class OpenstackCloud:
         password = os.environ.get('OS_PASSWORD')
         project_id = os.environ.get('OS_PROJECT_ID')
         auth_url = os.environ.get('OS_AUTH_URL')
-        # domain_name = os.environ.get('OS_PROJECT_DOMAIN_NAME')
 
 
         # Create user / password based authentication method.
@@ -68,7 +69,19 @@ class OpenstackCloud:
         return servers
 
 
+    def find_zone(self, enterprise_url):
+        zones = self.designateClient.zones.list();
+        for zone in zones:
+            if zone['name'] == (enterprise_url+'.'):
+                return zone
+        return None
+
     def check_deploy_ok(self,enterprise):
+        enterprise_url = self.cloud_config['enterprise_url'];
+        zone = self.find_zone(enterprise_url)
+        if not zone is None:
+                print(f"Zone already exists: {enterprise_url}.")
+                return False
         for node in enterprise['nodes']:
             to_deploy_name = node['name']
             for instance_key in self.servers:
@@ -121,12 +134,10 @@ class OpenstackCloud:
 
 
 
-    def create_nodes(self,enterprise):
-        ret = {} 
+    def create_nodes(self,enterprise, ret):
 
         ret['nodes']=[]
 
-        ret['check_deploy_ok'] = self.check_deploy_ok(enterprise)
         if not ret['check_deploy_ok']:
             errstr = "  Found that one or more nodes already exist, aborting deploy."
             raise RuntimeError(errstr)
@@ -210,6 +221,7 @@ class OpenstackCloud:
             enterprise_node = next(filter( lambda x: name == x['name'], enterprise['nodes']))
             nova_instance = self.nova_sess.servers.get(id)
             node['addresses']=nova_instance.addresses[network]
+
             if 'windows' not in enterprise_node['roles']: 
                 print("Skipping password retrieve for non-windows node " + name)
                 continue
@@ -224,14 +236,42 @@ class OpenstackCloud:
 
         return ret
 
+    def create_zones(self,enterprise,ret):
+        enterprise_url = self.cloud_config['enterprise_url'];
+        print("Creating DNS zone " + enterprise_url)
+        ret['create_zones'] = self.designateClient.zones.create(enterprise_url+".", email="root@"+enterprise_url)
+        return ret
+   
+    def create_dns_names(self,enterprise,ret):
+        enterprise_url = self.cloud_config['enterprise_url'];
+        zone = ret['create_zones']['id']
+
+        for node in ret['nodes']:
+            to_deploy_name = node['name']
+            addresses=node['addresses']
+            address=addresses[0]['addr']
+            print(f"Creating DNS zone {to_deploy_name}@{enterprise_url}/{address} " )
+            node['dns_setup'] = self.designateClient.recordsets.create(zone, to_deploy_name, 'A', [address])
+        return ret;
 
     def deploy_enterprise(self,enterprise):
-        ret = self.create_nodes (enterprise)
-        ret = self.wait_for_ready(enterprise,ret)
-        ret = self.collect_info(enterprise,ret)
+        ret = {} 
+        ret['check_deploy_ok'] = self.check_deploy_ok(enterprise)
+        if not ret['check_deploy_ok']:
+            errstr = "  Found that deploying the network will conflict with existing setup."
+            raise RuntimeError(errstr)
+        ret = self.create_zones(enterprise, ret)
+        ret = self.create_nodes (enterprise, ret)
+        ret = self.wait_for_ready(enterprise, ret)
+        ret = self.collect_info(enterprise, ret)
+        ret = self.create_dns_names(enterprise, ret)
         return ret
 
     def cleanup_enterprise(self,enterprise):
+        enterprise_url=self.cloud_config['enterprise_url']
+        if not self.find_zone(enterprise_url) is None:
+            self.designateClient.zones.delete(enterprise_url+'.')
+
         for node in enterprise['nodes']:
             to_deploy_name = node['name']
             for instance_key in self.servers:
