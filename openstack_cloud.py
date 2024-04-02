@@ -220,7 +220,10 @@ class OpenstackCloud:
             name = node['name']
             enterprise_node = next(filter( lambda x: name == x['name'], enterprise['nodes']))
             nova_instance = self.nova_sess.servers.get(id)
-            node['addresses']=nova_instance.addresses[network]
+            node['addresses']=[ 
+                    nova_instance.addresses[network][0], # control address -- as we don't have this yet, just use the flat netowrk
+                    nova_instance.addresses[network][0]  # game address -- as we don't have this yet, just use the flat netowrk
+                    ]
 
             if 'windows' not in enterprise_node['roles']: 
                 print("Skipping password retrieve for non-windows node " + name)
@@ -249,7 +252,7 @@ class OpenstackCloud:
         for node in ret['nodes']:
             to_deploy_name = node['name']
             addresses=node['addresses']
-            address=addresses[0]['addr']
+            address=addresses[1]['addr']
             print(f"Creating DNS zone {to_deploy_name}@{enterprise_url}/{address} " )
             node['dns_setup'] = self.designateClient.recordsets.create(zone, to_deploy_name, 'A', [address])
         return ret;

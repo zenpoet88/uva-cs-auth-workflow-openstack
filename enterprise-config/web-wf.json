@@ -1,0 +1,30 @@
+{
+	"nodes":
+	[
+		{ 
+			"name": "dc1",
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller_leader", "windows" ]
+		},
+		{
+			"name": "linep1",
+			"os": "jammy",
+			"domain": "castle",
+			"roles": [ "endpoint", "linux", "personal" ],
+			"user": "standard user"
+		},
+		{
+			"name": "identity",
+			"os": "Cent-IdP",
+			"domain": "castle",
+			"roles": [ "idp" ]
+		},
+		{
+			"name": "service" ,
+			"os": "Cent-SP",
+			"domain": "castle",
+			"roles": [ "sp" ]
+		}
+	]
+}

@@ -2,7 +2,7 @@ import time
 import socket
 import paramiko
 from shell_handler import ShellHandler
-from password import generate_password
+#from password import generate_password
 
 
 domain_safe_mode_password = 'hello!321' # generate_password(12)
