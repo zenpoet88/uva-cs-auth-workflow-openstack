@@ -6,6 +6,7 @@ import sys
 import json
 import role_register
 import role_domains
+import role_human
 from datetime import datetime
 from joblib import Parallel, delayed
 
@@ -83,11 +84,39 @@ def join_domains(cloud_config,enterprise,enterprise_built):
         
     return ret
 
+def deploy_human(cloud_config,enterprise,enterprise_built):
+    ret={}
+    access_list=[]
+    nodes = enterprise['nodes']
+    for node in nodes:
+        name = node['name']
+        control_ipv4_addr,game_ipv4_addr,password = extract_creds(enterprise_built,name)
+        access_list.append({
+            "node": node, 
+            "control_addr": control_ipv4_addr, 
+            "game_addr": game_ipv4_addr, 
+            "password": str(password) 
+        })
+
+    # sequential
+    results = []
+    for access in access_list:
+        print("Setting up human plugin on " + access['node']['name'])
+        results.append(role_human.deploy_human(access))
+
+    # parallel
+#    results = Parallel(n_jobs=10)(delayed(role_human.deploy_human)(access) for access in access_list)
+
+    ret['setup_human']=results
+        
+    return ret
+
 def setup_enterprise(cloud_config,to_build,built):
     built['setup']={}
     built['setup']['windows_register'] = register_windows(cloud_config,to_build,built)
     built['setup']['setup_domains'] = deploy_domain_controllers(cloud_config,to_build,built)
     built['setup']['join_domains'] = join_domains(cloud_config,to_build,built)
+    built['setup']['deploy_human'] = deploy_human(cloud_config,to_build,built)
 
 
 

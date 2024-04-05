@@ -5,8 +5,9 @@ import socket
 
 class ShellHandler:
 
-    def __init__(self, host, user, password, from_ip:str = None):
+    def __init__(self, host, user, password, from_ip:str = None, verbose=False):
 
+        self.verbose=verbose
         self.sock = None
         if not from_ip == None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -19,16 +20,12 @@ class ShellHandler:
         self.sftp = self.ssh.open_sftp()
 
 
-        #channel = self.ssh.invoke_shell()
-        #self.stdin = channel.makefile('wb')
-        #self.stdout = channel.makefile('r')
-
     def __del__(self):
 
         if hasattr(self, "ssh"):
             self.ssh.close()
             self.ssh=None
-        #self.channel.close()
+
         if not self.sock == None:
             self.sock.close()
 
@@ -41,7 +38,7 @@ class ShellHandler:
                     execute('cd folder_name')
         """
 
-        if verbose:
+        if verbose or self.verbose:
             print("Final cmd to execute:" + cmd)
         stdin,stdout,stderr = self.ssh.exec_command(cmd, bufsize=4096)
         stdout_lines = [] 
@@ -52,7 +49,7 @@ class ShellHandler:
             stdout_lines += stdout_newlines
             stderr_newlines=stderr.readlines()
             stderr_lines += stderr_newlines
-            if verbose:
+            if verbose or self.verbose:
                 for line in stdout_newlines:
                     print(line)
                 for line in stderr_newlines:
@@ -66,7 +63,7 @@ class ShellHandler:
         stderr_lines += stderr_newlines
         #print('stdout lines = ' + str(len(stdout_lines)))
         #print('stderr lines = ' + str(len(stderr_lines)))
-        if verbose:
+        if verbose or self.verbose:
             for line in stdout_newlines:
                 print(line)
             for line in stderr_newlines:
@@ -76,7 +73,7 @@ class ShellHandler:
     def execute_powershell(self, cmd, verbose=False, exit=False):
         quoted_cmd = cmd.replace('\\"', '\\"').replace("\\'", "\\").replace('"', '\\"')
         new_cmd = 'powershell -c "' + quoted_cmd + '"'
-        if verbose:
+        if verbose or self.verbose:
             print("Unquoted command for powershell:" + cmd)
         if exit:
             sys.exit(1)
