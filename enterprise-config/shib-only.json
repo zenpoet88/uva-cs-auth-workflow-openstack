@@ -17,13 +17,13 @@
 			"name": "identity",
 			"os": "Cent-IdP",
 			"domain": "castle",
-			"roles": [ "idp" ]
+			"roles": [ "idp", "centos7" ]
 		},
 		{
 			"name": "service" ,
 			"os": "Cent-SP",
 			"domain": "castle",
-			"roles": [ "sp" ]
+			"roles": [ "sp", "centos7" ]
 		}
 	]
 }

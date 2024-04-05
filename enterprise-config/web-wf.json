@@ -8,6 +8,24 @@
 			"roles": [ "domain_controller_leader", "windows" ]
 		},
 		{
+                        "name": "dc2" ,
+                        "os": "win2k22",
+                        "domain": "castle",
+                        "roles": [ "domain_controller", "windows" ]
+                },
+		{
+			"name": "identity",
+			"os": "Cent-IdP",
+			"domain": "castle",
+			"roles": [ "idp", "centos7" ]
+		},
+		{
+			"name": "service" ,
+			"os": "Cent-SP",
+			"domain": "castle",
+			"roles": [ "sp", "centos7" ]
+		},
+		{
 			"name": "linep1",
 			"os": "jammy",
 			"domain": "castle",
@@ -15,16 +33,11 @@
 			"user": "standard user"
 		},
 		{
-			"name": "identity",
-			"os": "Cent-IdP",
-			"domain": "castle",
-			"roles": [ "idp" ]
-		},
-		{
-			"name": "service" ,
-			"os": "Cent-SP",
-			"domain": "castle",
-			"roles": [ "sp" ]
-		}
+                        "name": "winep1",
+                        "os": "win2k22",
+                        "domain": "castle",
+                        "roles": [ "endpoint", "windows", "personal" ],
+                        "user": "standard user"
+                }
 	]
 }
