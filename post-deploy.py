@@ -10,6 +10,9 @@ import role_human
 from datetime import datetime
 from joblib import Parallel, delayed
 
+use_parallel=True
+verbose=True
+
 
 
 def load_json(filename):
@@ -46,14 +49,16 @@ def register_windows(cloud_config,enterprise,enterprise_built):
         control_ipv4_addr,game_ipv4_addr,password = extract_creds(enterprise_built,name)
         access_list.append({"name": name, "control_addr": control_ipv4_addr, "game_addr": game_ipv4_addr, "password": str(password)})
 
-    # sequential
-    #results = []
-    #for access in access_list:
-    #    results.append(role_register.register_windows_instance(access))
+    if use_parallel:
+        # parallel
+        results = Parallel(n_jobs=10)(delayed(role_register.register_windows_instance)(i) for i in access_list)
+        ret['register_windows']=results
+    else:
+        # sequential
+        results = []
+        for access in access_list:
+            results.append(role_register.register_windows_instance(access))
 
-    # parallel
-    results = Parallel(n_jobs=10)(delayed(role_register.register_windows_instance)(i) for i in access_list)
-    ret['register_windows']=results
         
     return ret
 
@@ -72,13 +77,16 @@ def join_domains(cloud_config,enterprise,enterprise_built):
         control_ipv4_addr,game_ipv4_addr,password = extract_creds(enterprise_built,name)
         access_list.append({"cloud_config": cloud_config, "node": node, "domain_leader": leader_details[domain], "control_addr": control_ipv4_addr, "game_addr": game_ipv4_addr, "password": str(password), 'domain': domain })
 
-    # sequential
-    #results = []
-    #for access in access_list:
-    #    results.append(role_domains.join_domain(access))
 
-    # parallel
-    results = Parallel(n_jobs=10)(delayed(role_domains.join_domain)(access) for access in access_list)
+    if use_parallel:
+        # parallel
+        results = Parallel(n_jobs=10)(delayed(role_domains.join_domain)(access) for access in access_list)
+    else:
+        # sequential
+        results = []
+        for access in access_list:
+            results.append(role_domains.join_domain(access))
+
 
     ret['join_domains']=results
         

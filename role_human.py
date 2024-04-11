@@ -37,14 +37,14 @@ def install_human_linux(node,user,control_ipv4_addr,password):
         'cd /tmp; ' + 
         'sudo wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; ' +
         'sudo dpkg -i google-chrome-stable_current_amd64.deb; ' +
-        'sudo apt install -f; ' +
+        'sudo env DEBIAN_FRONTEND=noninteractive apt install -f -y; ' +
         'sudo rm /tmp/pyhuman.zip /tmp/*.deb' 
     )
 
     stdout,stderr,exit_status = shell.execute_cmd(cmd)
 
 
-    return "" # {"node": node, "stdout": stdout, "stderr": stderr, "exit_status": exit_status}
+    return {"node": node, "stdout": stdout, "stderr": stderr, "exit_status": exit_status}
 
 def deploy_human(obj):
     node=obj['node']

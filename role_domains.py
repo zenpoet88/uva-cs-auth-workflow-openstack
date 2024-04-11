@@ -6,7 +6,7 @@ from shell_handler import ShellHandler
 
 
 domain_safe_mode_password = 'hello!321' # generate_password(12)
-verbose = False
+verbose = True
 
 def deploy_forest(cloud_config,name,control_ipv4_addr, game_ipv4_addr,password,domain):
 
@@ -77,8 +77,7 @@ def deploy_forest(cloud_config,name,control_ipv4_addr, game_ipv4_addr,password,d
             " set-dnsserversetting -inputobject $srv; "
             " ipconfig /flushdns  ; "
             " ipconfig /registerdns  ; "
-            " dcdiag /fix ; "
-            " nslookup dc1.castle.mtx1.os"
+            " dcdiag /fix  "
             )
     shell = ShellHandler(control_ipv4_addr,user,password)
     stdout3,stderr3,exit_status3 = shell.execute_powershell(remove_control_network_from_dns_cmd,verbose=verbose)
@@ -327,18 +326,18 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
 
 
     krb5_cmd= (
-            "sudo sed -i 's/{}/{}/' {} ; "
+            "sudo sed -i 's/default_realm = .*/default_realm = {}/' {} ; "
             "sudo sed -i '/\\[libdefaults\\]/a \  rdns=false ' {} ;  "
-            "sudo echo {} | kinit administrator@{} ;"
-            "sudo klist "
-            ).format(enterprise_name.upper(), fqdn_domain_name.upper(), krdb_config_path, krdb_config_path, leader_admin_password, fqdn_domain_name.upper())
+            "echo {} | sudo kinit administrator@{} ;"
+            "sleep 1; sudo klist "
+            ).format(enterprise_name.upper(), krdb_config_path, krdb_config_path, leader_admin_password, fqdn_domain_name.upper())
 
     realm_cmd= (
         "sudo realm discover {};"
         "echo {}| sudo realm join -U administrator {}  -v;"
         ).format(fqdn_domain_name, leader_admin_password, fqdn_domain_name.upper())
 
-    cmds= set_allow_password + ';' + set_dns_command + ';' + install_packages_cmd + ';' + set_chrony_command + ';' + krb5_cmd + ';' + realm_cmd 
+    cmds= '(' + set_allow_password + ';' + set_dns_command + ';' + install_packages_cmd + ';' + set_chrony_command + ';' + krb5_cmd + ';' + realm_cmd + ') 2>&1'
 
 
     shell = ShellHandler(control_ipv4_addr,'ubuntu',None)

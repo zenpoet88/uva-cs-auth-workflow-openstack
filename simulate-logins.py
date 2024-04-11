@@ -84,7 +84,7 @@ def simulate_login(term_no, login_start_time, login_length_seconds, user, enterp
         if random.random() < float(login_profile['fraction_of_logins_to_personal_machine']):
             # going to home node!
             to_node={"node": home_node}
-        elif random.random() < float(login_profile['fraction_of_non_personal_logins_to_shared_machines']):
+        elif len(shared_nodes) > 0 and random.random() < float(login_profile['fraction_of_non_personal_logins_to_shared_machines']):
             # going to shared node
             to_node={"node": random.choice(shared_nodes)['name'] }
         else:

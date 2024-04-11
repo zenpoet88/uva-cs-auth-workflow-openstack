@@ -19,6 +19,8 @@ login_results = []
 fake = Faker()
 nowish = datetime.now() 
 scheduler = BackgroundScheduler()
+verbose=True
+use_fake_fromip=False
 
 # functions
 
@@ -39,10 +41,12 @@ def emulate_login(number, login, user_data, built):
     from_ip_str= login_from['ip']
     mac= login_from['mac']
     to_node_name = login_to['node']
-    node = next(filter(lambda node: to_node_name == node['name'], built['deployed']['nodes']))
-    #print("To node:" + json.dumps(node,indent=2))
-    domain=node['domain']
-    targ_ip=node['addresses'][0]['addr']
+    to_node = next(filter(lambda node: to_node_name == node['name'], built['deployed']['nodes']))
+    #print("To node:" + json.dumps(to_node,indent=2))
+    domain=to_node['domain']
+    targ_ip=to_node['addresses'][0]['addr']
+    to_roles=to_node['roles']
+    is_windows = 'windows' in to_roles;
 
     # print("user:" + json.dumps(user_data,indent=2))
     user = next(filter(lambda user: login['user'] == user['user_profile']['username'], user_data))
@@ -64,7 +68,7 @@ def emulate_login(number, login, user_data, built):
     try:
         print(f"At {datetime.now()}, #{number} from ip {from_ip_str} with mac {mac} to ip = {targ_ip}, user = {username}@{domain}, password = {password}")
 
-        if False:
+        if use_fake_fromip:
             add_command = ( 
                     'sudo modprobe dummy ; ' 
                     'sudo ip link add ' + dev +' type dummy ; ' 
@@ -87,33 +91,23 @@ def emulate_login(number, login, user_data, built):
             del_command = None
 
 
-        shell = ShellHandler(targ_ip,fq_username,password=password, from_ip=from_ip_str)
 
-        #sock.bind((from_ip_str, 0))           # set source address
-        #sock.connect((targ_ip, 22))       # connect to the destination address
+        shell = ShellHandler(targ_ip,fq_username,password=password, from_ip=from_ip_str, verbose=verbose)
 
-        #client = paramiko.SSHClient()
-        #client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        #print(f"Logging in to {targ_ip} as {fq_username} with password {password}.")
-        #client.connect(targ_ip,
-        #               username=fq_username,
-        #               password=password,
-        #               sock=sock)
-
-        #channel = client.invoke_shell()
+        # works on linux and windows
+        #cmd ='python -c "import json;  print(json.dumps(json.load(open(\'action.json\',\'r\'))))"'
 
 
-        #cmd=(
-        #        f'python -c "import time; import getpass; duration={str(duration)}; '
-        #        'print(f\'{getpass.getuser()} sleeping for {duration} seconds \'); time.sleep(duration)"'
-        #        )
-        cmd='echo ' + json.dumps(login) + " > action.json  "
-        # print("Executing cmd on " + targ_ip + ": " + cmd)
-        stdout,stderr, exit_status = shell.execute_cmd(cmd, verbose=False)
+        cmd1='echo ' + json.dumps(login) + " > action.json  "
+        stdout,stderr, exit_status = shell.execute_cmd(cmd1)
 
-        pscmd ='python -c "import json;  print(json.dumps(json.load(open(\'action.json\',\'r\'))))"'
-
-        stdout2,stderr2, exit_status2 = shell.execute_powershell(pscmd, verbose=False)
+        if is_windows:
+            cmd2=f'echo "{username}\n{password}"'
+            stdout2,stderr2, exit_status2 = shell.execute_powershell(cmd2)
+        else:
+            passfile="~/.shib_login"
+            cmd2=f'echo "{username}\n{password}" > {passfile}; "/opt/pyhuman/bin/python" "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --extra  passfile {passfile}'
+            stdout2,stderr2, exit_status2 = shell.execute_powershell(cmd2)
 
 
         if not del_command is None:

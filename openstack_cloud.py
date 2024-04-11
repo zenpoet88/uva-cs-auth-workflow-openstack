@@ -272,8 +272,9 @@ class OpenstackCloud:
 
     def cleanup_enterprise(self,enterprise):
         enterprise_url=self.cloud_config['enterprise_url']
-        if not self.find_zone(enterprise_url) is None:
-            self.designateClient.zones.delete(enterprise_url+'.')
+        zone= self.find_zone(enterprise_url) 
+        if not zone is None:
+            self.designateClient.zones.delete(zone['id'])
 
         for node in enterprise['nodes']:
             to_deploy_name = node['name']

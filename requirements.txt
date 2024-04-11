@@ -9,7 +9,5 @@ openstacksdk==0.61.0
 paramiko==3.4.0
 python_designateclient==4.5.0
 python_glanceclient==4.4.0
-python_glanceclient==3.6.0
 python_neutronclient==7.8.0
 python_novaclient==18.4.0
-python_novaclient==17.6.0
