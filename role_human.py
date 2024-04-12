@@ -1,6 +1,6 @@
 from shell_handler import ShellHandler
 
-verbose = False
+verbose = True
 
 
 def node_to_default_user(node):
@@ -24,21 +24,25 @@ def install_human_windows(node,user,control_ipv4_addr,password):
     return {"node": node, "stdout": stdout, "stderr": stderr, "exit_status": exit_status}
 
 def install_human_linux(node,user,control_ipv4_addr,password):
+    print(f"Installing as user {user}")
     shell = ShellHandler(control_ipv4_addr,user,password, verbose=verbose)
     shell.put_file('Downloads/pyhuman.zip', '/tmp/pyhuman.zip')
 
     cmd=(
+        'set -x ;' +
         'sudo rm -rf /opt/pyhuman; ' + 
         'sudo mkdir -p /opt/pyhuman; ' + 
         'cd /opt/pyhuman; ' + 
         'sudo env DEBIAN_FRONTEND=noninteractive apt install -y python3 python3-pip virtualenv xvfb unzip; ' +
         'sudo unzip /tmp/pyhuman.zip; ' + 
-        'sudo pip install -r requirements.txt; ' +
+        'sudo virtualenv -p python3 /opt/pyhuman;'
+        'sudo /opt/pyhuman/bin/python3 -m pip install -r requirements.txt; ' +
         'cd /tmp; ' + 
         'sudo wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; ' +
         'sudo dpkg -i google-chrome-stable_current_amd64.deb; ' +
         'sudo env DEBIAN_FRONTEND=noninteractive apt install -f -y; ' +
-        'sudo rm /tmp/pyhuman.zip /tmp/*.deb' 
+        'sudo rm /tmp/pyhuman.zip /tmp/*.deb;'   +
+        'sudo chmod 777 /home '
     )
 
     stdout,stderr,exit_status = shell.execute_cmd(cmd)

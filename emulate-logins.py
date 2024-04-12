@@ -19,7 +19,7 @@ login_results = []
 fake = Faker()
 nowish = datetime.now() 
 scheduler = BackgroundScheduler()
-verbose=True
+verbose=False
 use_fake_fromip=False
 
 # functions
@@ -37,15 +37,15 @@ def emulate_login(number, login, user_data, built):
         raise RuntimeError("Cannot get from IP for initial connection")
 
 
-    #duration = login['login_length']
+    duration = login['login_length']
     from_ip_str= login_from['ip']
     mac= login_from['mac']
     to_node_name = login_to['node']
     to_node = next(filter(lambda node: to_node_name == node['name'], built['deployed']['nodes']))
-    #print("To node:" + json.dumps(to_node,indent=2))
+    # print("To node:" + json.dumps(to_node,indent=2))
     domain=to_node['domain']
     targ_ip=to_node['addresses'][0]['addr']
-    to_roles=to_node['roles']
+    to_roles=to_node['enterprise_description']['roles']
     is_windows = 'windows' in to_roles;
 
     # print("user:" + json.dumps(user_data,indent=2))
@@ -102,12 +102,14 @@ def emulate_login(number, login, user_data, built):
         stdout,stderr, exit_status = shell.execute_cmd(cmd1)
 
         if is_windows:
+            print("To windows node")
             cmd2=f'echo "{username}\n{password}"'
             stdout2,stderr2, exit_status2 = shell.execute_powershell(cmd2)
         else:
-            passfile="~/.shib_login"
-            cmd2=f'echo "{username}\n{password}" > {passfile}; "/opt/pyhuman/bin/python" "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --extra  passfile {passfile}'
-            stdout2,stderr2, exit_status2 = shell.execute_powershell(cmd2)
+            print("To linux node")
+            passfile=f"/tmp/shib_login.{username}"
+            cmd2=f'echo "{username}\n{password}" > {passfile}; xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --extra  passfile {passfile}'
+            stdout2,stderr2, exit_status2 = shell.execute_cmd(cmd2, verbose=True)
 
 
         if not del_command is None:
@@ -170,12 +172,14 @@ def schedule_logins(logins_file, setup_output_file, fast_debug = False):
         if fast_debug: 
             nowish +=  timedelta(seconds=3)
             login['login_start'] = str(nowish)
-            login['login_length'] = 3
+            login['login_length'] = 60
 
         job_start = login['login_start']
         job_start = datetime.strptime(job_start, '%Y-%m-%d %H:%M:%S.%f')
-        scheduler.add_job( emulate_login, 'date', run_date=job_start, kwargs={'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built']})
-#        emulate_login(number= number, login= login, user_data= users, built= setup_output_file['enterprise_built'])
+        if fast_debug:
+            emulate_login(number= number, login= login, user_data= users, built= setup_output_file['enterprise_built'])
+        else:
+            scheduler.add_job( emulate_login, 'date', run_date=job_start, kwargs={'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built']})
         
 
     return scheduler

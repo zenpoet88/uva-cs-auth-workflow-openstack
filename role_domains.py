@@ -59,6 +59,9 @@ def deploy_forest(cloud_config,name,control_ipv4_addr, game_ipv4_addr,password,d
         except paramiko.ssh_exception.NoValidConnectionsError:
             time.sleep(5)
             pass
+        except ConnectionResetError:
+            time.sleep(5)
+            pass
 
     if not 'ReplicaDirectoryServers' in str(stdout2):
         print("Stdout2: " + str(stdout2))
@@ -127,8 +130,12 @@ def add_domain_controller(cloud_config,leader_details,name,control_ipv4_addr, ga
     if verbose:
         print("  Register as domain comtroller command:" + adcmd)
 
-    shell = ShellHandler(control_ipv4_addr,user,password)
-    stdout2,stderr2,exit_status2 = shell.execute_powershell(pycmd,verbose=verbose)
+    try:
+        shell = ShellHandler(control_ipv4_addr,user,password)
+        stdout2,stderr2,exit_status2 = shell.execute_powershell(pycmd,verbose=verbose)
+    except paramiko.ssh_exception.AuthenticationException:
+        return {}
+
     stdout = [stdout2]
     stderr = [stderr2]
     exit_status = [exit_status2]

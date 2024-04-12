@@ -70,14 +70,14 @@ class OpenstackCloud:
 
 
     def find_zone(self, enterprise_url):
-        zones = self.designateClient.zones.list();
+        zones = self.designateClient.zones.list()
         for zone in zones:
             if zone['name'] == (enterprise_url+'.'):
                 return zone
         return None
 
     def check_deploy_ok(self,enterprise):
-        enterprise_url = self.cloud_config['enterprise_url'];
+        enterprise_url = self.cloud_config['enterprise_url']
         zone = self.find_zone(enterprise_url)
         if not zone is None:
                 print(f"Zone already exists: {enterprise_url}.")
@@ -88,7 +88,7 @@ class OpenstackCloud:
                 instance_name=self.servers[instance_key]['name']
                 if to_deploy_name.strip() == instance_name.strip():
                     print("Found that server " + instance_name + " already exists.")
-                    return False;
+                    return False
         return True
 
     def os_to_image(self,os_name):
@@ -150,18 +150,18 @@ class OpenstackCloud:
             domain = node.get('domain',"")
             keypair = self.cloud_config['keypair']
 
-            image = self.os_to_image(os_name);
-            flavor = self.size_to_flavor(os_name);
-            security_group = self.cloud_config['security_group'];
+            image = self.os_to_image(os_name)
+            flavor = self.size_to_flavor(os_name)
+            security_group = self.cloud_config['security_group']
             all_groups = self.conn.list_security_groups({"name": security_group})
             if not len(all_groups) == 1:
                 errstr = "Found 0 or more than 1 security groups called " + security_group + "\n" + str(all_groups)
                 raise RuntimeError(errstr)
 
-            network = node.get('network',self.cloud_config['external_network']);
+            network = node.get('network',self.cloud_config['external_network'])
 
-            nova_image = self.find_image_by_name(image);
-            # nova_flavor = self.nova_sess.flavors.find(name=flavor);
+            nova_image = self.find_image_by_name(image)
+            # nova_flavor = self.nova_sess.flavors.find(name=flavor)
             nova_net = self.find_network_by_name(network)
             nova_nics = [{'net-id': nova_net['id']}]
             nova_instance = self.conn.create_server(name=name, image=image, flavor=flavor, key_name=keypair, security_groups=[security_group], nics=nova_nics)
@@ -170,20 +170,21 @@ class OpenstackCloud:
             nova_instance = self.nova_sess.servers.get(nova_instance.id)
             # print(dir(nova_instance))
             new_node = {}
-            new_node['name'] = name;
-            new_node['flavor'] = flavor;
-            new_node['size'] = size;
-            new_node['os'] = os_name;
-            new_node['domain'] = domain;
-            new_node['image'] = image;
-            new_node['security_group'] = security_group;
-            new_node['network'] = network;
-            new_node['keypair'] = keypair;
-            new_node['nova_image'] = nova_image;
-            new_node['nova_nics'] = nova_nics;
-            new_node['is_ready'] = False;
-            new_node['nova_status'] = nova_instance.status;
-            new_node['id'] = nova_instance.id;
+            new_node['name'] = name
+            new_node['flavor'] = flavor
+            new_node['size'] = size
+            new_node['os'] = os_name
+            new_node['domain'] = domain
+            new_node['image'] = image
+            new_node['security_group'] = security_group
+            new_node['network'] = network
+            new_node['keypair'] = keypair
+            new_node['nova_image'] = nova_image
+            new_node['nova_nics'] = nova_nics
+            new_node['is_ready'] = False
+            new_node['nova_status'] = nova_instance.status
+            new_node['id'] = nova_instance.id
+            new_node['enterprise_description'] = node
             ret['nodes'].append(new_node)
         return ret
 
@@ -198,12 +199,12 @@ class OpenstackCloud:
                 id=node['id']
                 if not node['is_ready']: 
                     nova_instance = self.nova_sess.servers.get(id)
-                    node['nova_status'] = nova_instance.status;
+                    node['nova_status'] = nova_instance.status
                     if nova_instance.status == 'ACTIVE':
                         print("Node " + node['name'] + " is ready!")
-                        node['is_ready'] = True;
+                        node['is_ready'] = True
                     elif nova_instance.status == 'BUILD':
-                        waiting = True;
+                        waiting = True
                     else:
                         errstr = "Node " + node['name'] + " is neither BUILDing or ACTIVE.  Assuming error has occured.  Exiting...."
                         raise RuntimeError(errstr)
@@ -213,7 +214,7 @@ class OpenstackCloud:
         return ret
 
     def collect_info(self,enterprise,enterprise_built):
-        network = self.cloud_config['external_network'];
+        network = self.cloud_config['external_network']
         ret = enterprise_built
         for node in enterprise_built['nodes']:
             id = node['id']
@@ -240,13 +241,13 @@ class OpenstackCloud:
         return ret
 
     def create_zones(self,enterprise,ret):
-        enterprise_url = self.cloud_config['enterprise_url'];
+        enterprise_url = self.cloud_config['enterprise_url']
         print("Creating DNS zone " + enterprise_url)
         ret['create_zones'] = self.designateClient.zones.create(enterprise_url+".", email="root@"+enterprise_url)
         return ret
    
     def create_dns_names(self,enterprise,ret):
-        enterprise_url = self.cloud_config['enterprise_url'];
+        enterprise_url = self.cloud_config['enterprise_url']
         zone = ret['create_zones']['id']
 
         for node in ret['nodes']:
@@ -255,7 +256,7 @@ class OpenstackCloud:
             address=addresses[1]['addr']
             print(f"Creating DNS zone {to_deploy_name}@{enterprise_url}/{address} " )
             node['dns_setup'] = self.designateClient.recordsets.create(zone, to_deploy_name, 'A', [address])
-        return ret;
+        return ret
 
     def deploy_enterprise(self,enterprise):
         ret = {} 

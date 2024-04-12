@@ -10,7 +10,7 @@ import role_human
 from datetime import datetime
 from joblib import Parallel, delayed
 
-use_parallel=True
+use_parallel=False
 verbose=True
 
 
@@ -165,9 +165,11 @@ def main():
 
     json_output = {}
     try:
-        json_output["setup-start_time"] = str(datetime.now())
         setup_output_filename = sys.argv[1]
         setup_output = load_json(setup_output_filename)
+
+        json_output = setup_output
+        json_output["setup-start_time"] = str(datetime.now())
 
         enterprise_built = setup_output['enterprise_built']
         enterprise = setup_output['enterprise_to_build']
@@ -178,10 +180,11 @@ def main():
         setup_enterprise(cloud_config,enterprise,enterprise_built)
         print("Setting up nodes, completed.")
 
+        json_output['enterprise'] = enterprise
         json_output['enterprise_built'] = enterprise_built
         json_output["setup-end_time"] = str(datetime.now())
 
-        print("Enterprise built.  Writing output to setup-output.json.")
+        print("Enterprise setup.  Writing output to post-deploy-output.json.")
 
     except:
         traceback.print_exc()
