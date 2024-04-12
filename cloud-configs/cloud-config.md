@@ -28,3 +28,9 @@ access point for any deployed nodes.
 ##  Sub-fields
 
 
+
+# Sample files
+
+* `mtx.json` - config for mega-techx1 as administrator.
+* `shen.json` - config for shen-23 as administrator.
+* `shen-proj1.json` - config for shen-23 as project 1.

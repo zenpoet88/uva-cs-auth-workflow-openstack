@@ -33,6 +33,21 @@ or prompt the user for things like passwords (less preferred), etc.
 ** `domain_controller_leader` -- install a domain controller with a new forest for active directory.
 ** `domain_controller` -- join an existing domain (requires a domain_controller_leader.
 ** `linux` -- specifies login should be via ssh key.
+** `centos7` -- specifies login should be via ssh key.
+** `endpoint` -- specifies that this is an endpoint that should have human emulation.
+** `idp` -- specifies that this machine is an Identity Provider.
+** `sp` -- specifies that this machine is a Service Provider.
 
 
+# Sample Files
+
+* `enterprise-tiny.json` -  Sample enterprise with the smallest number of nodes possible to demonstrate a domain controller (DC).
+* `enterprise-med.json` -  Sample enterprise with a modest number of nodes possible to demonstrate a DC.
+* `enterprise-large.json` -  Sample enterprise with the largest number of nodes possible to demonstrate a DC, possibly representing a small workplace.
+
+* `cage2.json` - The CyBORG CAGE Challenge 2 configuration, enhanced with 2 DCs to demonstrate an authentication workflow.
+* `enterprise-dcstress.json` - a bunch of DCs configured to stress test the setup tools.
+* `shib-only.json` - A sample with DCs and a shibboleth Identity Provider (IdP) and Service Provider (SP).
+* `dc-only.json` - A sample with only DCs to test that domain controller setup is successful.
+* `web-wf.json` - A sample workflow with DCs, IdP and SP, along with end points to test the web authentication workflow.
 
