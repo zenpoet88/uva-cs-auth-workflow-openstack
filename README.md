@@ -96,3 +96,19 @@ is helpful with the problem.  Also, by default setup happens in parallel, and th
 option that can be used to do sequential setup, which far improves the ability to debug at the expense of significantly more
 setup time.
 
+
+# Deploying in Vanderbilt CAGE2 infrastructure.
+
+* Run `deploy-nodes.py` and `post-deploy.py` to get a `post-deploy-output.json`.  Run `clean-nodes.py` to remove all nodes.
+
+* Clone `git@github.com:CASTLEGym/castle-vm.git`.  Follow the readme to install preqreqs and provision VMs.  
+
+* Check out the `develop` branch, follow the README to deploy a stack.
+
+* Log into the "workflow" VM, and clone this repository.
+
+* Copy the post-deploy-output.json to the workflow VM.  Modify it such that the addresses array matches the CAGE2 addresses assigned in the heat template.
+
+* Run post-deploy.py with the modified post-deploy-output.json to configure the Vandy HEAT-template deployed nodes.  
+
+* Simulate and emulate logins from the workflow VM as per normal (described above).
