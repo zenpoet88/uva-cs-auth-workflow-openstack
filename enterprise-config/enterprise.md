@@ -32,8 +32,8 @@ or prompt the user for things like passwords (less preferred), etc.
 ** `windows` -- register the instance with skms.  Specifies logins should be via password.
 ** `domain_controller_leader` -- install a domain controller with a new forest for active directory.
 ** `domain_controller` -- join an existing domain (requires a domain_controller_leader.
-** `linux` -- specifies login should be via ssh key.
-** `centos7` -- specifies login should be via ssh key.
+** `linux` -- specifies login should be via ssh key for Ubuntu 22/Jammy.
+** `centos7` -- specifies login should be via ssh key for CentOS 7.
 ** `endpoint` -- specifies that this is an endpoint that should have human emulation.
 ** `idp` -- specifies that this machine is an Identity Provider.
 ** `sp` -- specifies that this machine is a Service Provider.

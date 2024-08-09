@@ -9,15 +9,15 @@
 		},
 		{
 			"name": "identity",
-			"os": "Cent-IdP",
+			"os": "Jammy-IdP",
 			"domain": "castle",
-			"roles": [ "idp", "centos7" ]
+			"roles": [ "idp", "linux" ]
 		},
 		{
 			"name": "service" ,
-			"os": "Cent-SP",
+			"os": "Jammy-SP",
 			"domain": "castle",
-			"roles": [ "sp", "centos7" ]
+			"roles": [ "sp", "linux" ]
 		},
 		{
 			"name": "user0",

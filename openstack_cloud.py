@@ -51,7 +51,7 @@ class OpenstackCloud:
 
         # Create OpenStack keystoneauth1 session.
         # https://goo.gl/BE7YMt
-        sess = session.Session(auth=auth)
+        sess = session.Session(auth=auth, verify=os.environ.get('OS_CACERT'))
 
         return sess
 

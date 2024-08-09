@@ -7,7 +7,9 @@
 	"image_map":
 	{
 		"win2k22": "ws2022-cs-license",
-		"jammy": "jammy-amd64"
+		"jammy": "jammy-amd64",
+		"Jammy-IdP": "jammy-idp",
+		"Jammy-SP": "jammy-sp"
 
 	},
 	"instance_size_map": 
