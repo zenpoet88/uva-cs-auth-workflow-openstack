@@ -269,6 +269,7 @@ def main():
 
     # deploy users to domain if given info
     if not output_filename == None:
+        print("Deploying users ...")
         deploy_users = role_domains.deploy_users(users,built)
         json_output['deploy_users']=deploy_users
 
