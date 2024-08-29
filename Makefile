@@ -1,5 +1,5 @@
 
-check: requirements.txt *.py Makefile
+check: *.py Makefile
 	python3 -m pyflakes *.py
 
 requirements.txt: *.py Makefile

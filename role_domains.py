@@ -20,7 +20,7 @@ def deploy_forest(cloud_config,name,control_ipv4_addr, game_ipv4_addr,password,d
         "$secure=ConvertTo-SecureString -asplaintext -string {} -force ; "
         "Install-ADDSForest -domainname {} -SafeModeAdministratorPassword $secure -verbose -NoRebootOnCompletion:$true -Force:$true ; "
         "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
-        "Expand-Archive .\python.zip; "
+        "Expand-Archive -force .\python.zip; "
         "mv python c:\\ ; "
         "icacls \"c:\\python\" /grant:r \"users:(RX)\" /C ; "
         "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
@@ -39,7 +39,7 @@ def deploy_forest(cloud_config,name,control_ipv4_addr, game_ipv4_addr,password,d
     except socket.error:
         pass
 
-    print("  Waiting for reboot (Expect socket closed by peer messages).")
+    print("  Waiting for reboot of domain controller leader with ip={} (Expect socket closed by peer messages).".format(control_ipv4_addr))
     time.sleep(10)
     status_received = False
     attempts = 0
@@ -48,9 +48,10 @@ def deploy_forest(cloud_config,name,control_ipv4_addr, game_ipv4_addr,password,d
             attempts += 1
             shell = ShellHandler(control_ipv4_addr,user,password)
             stdout2,stderr2,exit_status2 = shell.execute_powershell("get-addomain", verbose=verbose)
-            if 'Attempting to perform the' in str(stdout2): 
+            if 'Attempting to perform the' in str(stdout2)+ str(stderr2):
                 # server is starting up, try again.
                 status_received=False
+                time.sleep(5)
             else:
                 status_received=True
         except paramiko.ssh_exception.SSHException:
@@ -107,7 +108,7 @@ def add_domain_controller(cloud_config,leader_details,name,control_ipv4_addr, ga
 
     pycmd=(
         "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
-        "Expand-Archive .\python.zip; "
+        "Expand-Archive -force .\python.zip; "
         "mv python c:\\ ; "
         "icacls \"c:\\python\" /grant:r \"users:(RX)\" /C ; "
         )
@@ -171,7 +172,7 @@ def add_domain_controller(cloud_config,leader_details,name,control_ipv4_addr, ga
     except socket.error:
         pass
 
-    print("  Waiting for reboot (Expect socket closed by peer messages).")
+    print("  Waiting for reboot of windows node with ip={} (Expect socket closed by peer messages).".format(control_ipv4_addr))
     time.sleep(10)
     status_received = False
     attempts = 0
@@ -255,11 +256,11 @@ def join_domain_windows(name, leader_admin_password, control_ipv4_addr, game_ipv
     user='Administrator'
     cmd=(
         "$passwd = convertto-securestring -AsPlainText -Force -String {} ; "
-        "$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist '{}\\administrator',$passwd ; "
+        "$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist 'administrator@{}',$passwd ; "
         "Set-DnsClientServerAddress -serveraddress ({}) -interfacealias 'Ethernet Instance 0' ; "
         "Add-Computer -Credential $cred -domainname {};" 
         "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
-        "Expand-Archive .\python.zip; "
+        "Expand-Archive -force .\python.zip; "
         "mv python c:\\ ; "
         "icacls \"c:\\python\" /grant:r \"users:(RX)\" /C ; "
         "$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path; "
@@ -269,7 +270,7 @@ def join_domain_windows(name, leader_admin_password, control_ipv4_addr, game_ipv
         ).format(leader_admin_password, domain_name, domain_ips, fqdn_domain_name)
 
 
-    print("  Joining an exsiting domain: " + domain_name)
+    print("  Joining an existing domain: " + domain_name)
 
     shell = ShellHandler(control_ipv4_addr,user,password)
     stdout,stderr,exit_status = shell.execute_powershell(cmd,verbose=verbose)
@@ -280,23 +281,27 @@ def join_domain_windows(name, leader_admin_password, control_ipv4_addr, game_ipv
     except socket.error:
         pass
 
-    print("  Waiting for reboot (Expect socket closed by peer messages).")
+    print("  Waiting for reboot of windows domain member with ip={} (Expect socket closed by peer messages).".format(control_ipv4_addr))
     time.sleep(10)
     status_received = False
     attempts=0
+    stdout2=""
+    stderr2=""
     while not status_received and attempts < 60:
         try:
             attempts += 1
             shell = ShellHandler(control_ipv4_addr,domain_name+'\\'+user,leader_admin_password)
             stdout2,stderr2,exit_status2 = shell.execute_powershell('echo "the domain is $env:userdomain" ', verbose=verbose)
             status_received=True
+            print("  Reboot Completed by verifying computer is in the domain");
         except paramiko.ssh_exception.SSHException:
-            time.sleep(2)
+            time.sleep(5)
             pass
         except paramiko.ssh_exception.NoValidConnectionsError:
-            time.sleep(2)
+            time.sleep(5)
             pass
-    print("  Reboot Completed by verifying computer is in the domain");
+    if stdout2 == "":
+       raise RuntimeError("Could not verify machine {} was on domain: unable to connect".format(name))
     if not 'the domain is {}'.format(domain_name.upper()) in str(stdout2):
         print("join_domain_stdout:" + str(stdout))
         print("join_domain_stderr:" + str(stderr))
@@ -317,7 +322,13 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
     krdb_config_path='/etc/krb5.conf'
 
 
-    set_allow_password="set -x ; ip a ; ping -c 3 google.com; ping -c 3 nova.clouds.archive.ubuntu.com ; sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/'  /etc/ssh/sshd_config"
+    set_allow_password=(
+        "set -x ; ip a ; ping -c 3 google.com; ping -c 3 nova.clouds.archive.ubuntu.com ;  "
+        "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/'  /etc/ssh/sshd_config; "
+        "sudo sed -i 's/#PasswordAuthentication /PasswordAuthentication /'  /etc/ssh/sshd_config; "
+        "sudo rm /etc/ssh/sshd_config.d/60-cloudimg-settings.conf "
+    )
+
     set_dns_command=(
         "sudo sed -i '/dhcp4: true/a \            nameservers:\\n                addresses: \[ {} \]' {} ;  "
         "cat {}; sudo netplan apply ; echo Hostname=$(hostname); sudo resolvectl status  "
@@ -352,7 +363,7 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
 
     shell.execute_cmd("sudo reboot now" , verbose=verbose)
 
-    print("  Waiting for reboot (Expect socket closed by peer messages).")
+    print("  Waiting for reboot of linux domain member with ip={}(Expect socket closed by peer messages).".format(control_ipv4_addr))
     time.sleep(5)
     status_received = False
     attempts = 0
@@ -363,16 +374,17 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
         attempts += 1
         try:
             admin_user='administrator@' + fqdn_domain_name
-            print("  Trying to verify reboot ... creds= {}:{}".format(admin_user,leader_admin_password))
+            print("  Trying to verify reboot ... creds={}:{}:{}".format(control_ipv4_addr,admin_user,leader_admin_password))
             shell = ShellHandler(control_ipv4_addr, admin_user, leader_admin_password)
             stdout2,stderr2,exit_status2 = shell.execute_cmd('realm list', verbose=verbose)
             status_received=True
         except paramiko.ssh_exception.SSHException:
-            print("  Waiting for reboot (Expect socket closed by peer messages).")
+            print("  Waiting for reboot of linux domain member with ip={}(Expect socket closed by peer messages).".format(control_ipv4_addr))
+
             time.sleep(2)
             pass
         except paramiko.ssh_exception.NoValidConnectionsError:
-            print("  Waiting for reboot (Expect socket closed by peer messages).")
+            print("  Waiting for reboot of linux domain member with ip={}(Expect socket closed by peer messages).".format(control_ipv4_addr))
             time.sleep(2)
             pass
 
