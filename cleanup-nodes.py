@@ -32,7 +32,7 @@ def cleanup_enterprise(cloud_config,enterprise):
 def main():
 
     if len(sys.argv) != 2:
-        print("Usage:  python " + sys.argv[0] + " setup-output.json ")
+        print("Usage:  python " + sys.argv[0] + " post-deploy-output.json ")
         sys.exit(1)
 
     output_filename = sys.argv[1]
@@ -49,7 +49,7 @@ def main():
     json_output["cleanup_end_time"] = str(datetime.now())
 
     print("Enterprise cleaned.  Writing output to cleanup-output.json.")
-    with open("cleanup_output.json", "w") as f:
+    with open("cleanup-output.json", "w") as f:
         json.dump(json_output,f)
 
     return

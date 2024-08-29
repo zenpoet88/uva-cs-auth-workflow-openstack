@@ -39,7 +39,7 @@ def deploy_enterprise(cloud_config,enterprise):
 def main():
 
     if len(sys.argv) != 3:
-        print("Usage:  python " + sys.argv[0] + " cloud_config.json enterprise.json")
+        print("Usage:  python " + sys.argv[0] + " cloud-config.json enterprise.json")
         sys.exit(1)
 
     json_output = {}
@@ -59,12 +59,12 @@ def main():
 
         json_output["deploy_end_time"] = str(datetime.now())
 
-        print("Enterprise built.  Writing output to setup-output.json.")
+        print("Enterprise built.  Writing output to deploy-output.json.")
     except:
         traceback.print_exc()
-        print("Exception occured while setting up enterprise.  Dumping results to setup-output.json anyhow.")
+        print("Exception occured while setting up enterprise.  Dumping results to deploy-output.json anyhow.")
 
-    with open("setup-output.json", "w") as f:
+    with open("deploy-output.json", "w") as f:
         json.dump(json_output,f)
 
     return

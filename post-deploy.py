@@ -244,7 +244,7 @@ def deploy_domain_controllers(cloud_config,enterprise,enterprise_built):
 def main():
 
     if len(sys.argv) != 2:
-        print("Usage:  python " + sys.argv[0] + " setup-output.json")
+        print("Usage:  python " + sys.argv[0] + " deploy-output.json")
         sys.exit(1)
 
     json_output = {}
@@ -272,7 +272,7 @@ def main():
 
     except:
         traceback.print_exc()
-        print("Exception occured while setting up enterprise.  Dumping results to setup-output.json anyhow.")
+        print("Exception occured while setting up enterprise.  Dumping results to post-deploy-output.json anyhow.")
 
     with open("post-deploy-output.json", "w") as f:
         json.dump(json_output,f)
