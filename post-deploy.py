@@ -158,8 +158,8 @@ def setup_moodle_idps(cloud_config,enterprise,enterprise_built):
     else:
         # sequential
         for access in access_list:
-            print("Setting up human plugin on " + access['node']['name'])
-            results.append(role_human.setup_moodle_idp(access))
+            print("Setting up IDP on " + access['node']['name'])
+            results.append(role_moodle.setup_moodle_idp(access))
 
     ret['setup_moodle_idp']=results
         
@@ -168,15 +168,15 @@ def setup_moodle_idps(cloud_config,enterprise,enterprise_built):
 def setup_moodle_sps(cloud_config,enterprise,enterprise_built):
     ret={}
     access_list=[]
-    sps = list(filter(lambda x: 'idp' in x['roles'], enterprise['nodes']))
+    sps = list(filter(lambda x: 'sp' in x['roles'], enterprise['nodes']))
     leader_details=enterprise_built['setup']['setup_domains']['domain_leaders']
     for node in sps:
         name = node['name']
         domain = node['domain']
         if domain == None: 
-            print("No domain for IDP {} to configure against".format(name))
+            print("No domain for SP {} to configure against".format(name))
             continue
-        print("Configuring IDP against domain on " + name)
+        print("Configuring SP against domain on " + name)
         control_ipv4_addr,game_ipv4_addr,password = extract_creds(enterprise_built,name)
         access_list.append({
             "node": node, 
@@ -193,8 +193,8 @@ def setup_moodle_sps(cloud_config,enterprise,enterprise_built):
     else:
         # sequential
         for access in access_list:
-            print("Setting up human plugin on " + access['node']['name'])
-            results.append(role_human.setup_moodle_sp(access))
+            print("Setting up SP on " + access['node']['name'])
+            results.append(role_moodle.setup_moodle_sp(access))
 
     ret['setup_moodle_sp']=results
         
@@ -203,10 +203,10 @@ def setup_moodle_sps(cloud_config,enterprise,enterprise_built):
 
 def setup_enterprise(cloud_config,to_build,built):
     built['setup']={}
-    built['setup']['windows_register'] = register_windows(cloud_config,to_build,built)
+    #built['setup']['windows_register'] = register_windows(cloud_config,to_build,built)
     built['setup']['setup_domains'] = deploy_domain_controllers(cloud_config,to_build,built)
-    built['setup']['join_domains'] = join_domains(cloud_config,to_build,built)
-    built['setup']['deploy_human'] = deploy_human(cloud_config,to_build,built)
+    #built['setup']['join_domains'] = join_domains(cloud_config,to_build,built)
+    #built['setup']['deploy_human'] = deploy_human(cloud_config,to_build,built)
     built['setup']['setup_moodle_idps'] = setup_moodle_idps(cloud_config,to_build,built)
     built['setup']['setup_moodle_sps'] = setup_moodle_sps(cloud_config,to_build,built)
 

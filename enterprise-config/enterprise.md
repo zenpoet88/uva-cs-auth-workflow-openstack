@@ -35,8 +35,8 @@ or prompt the user for things like passwords (less preferred), etc.
 ** `linux` -- specifies login should be via ssh key for Ubuntu 22/Jammy.
 ** `centos7` -- specifies login should be via ssh key for CentOS 7.
 ** `endpoint` -- specifies that this is an endpoint that should have human emulation.
-** `idp` -- specifies that this machine is an Identity Provider.
-** `sp` -- specifies that this machine is a Service Provider.
+** `idp` -- specifies that this machine is an Identity Provider.  Shibboleth will be configured.
+** `sp` -- specifies that this machine is a Service Provider.  Shib. and Moodle will be configured.
 
 
 # Sample Files

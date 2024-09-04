@@ -16,7 +16,7 @@ $ pip install -r requirements.txt
 ```
 
 The deploy scripts use [Designate](https://docs.openstack.org/designate/latest/) to handle DNS resolution, required for the Shibboleth workflow.  
-Shibboleth will very likely not work without the proper DNS resolutin.
+Shibboleth and Moodle will not work without the proper DNS resolution.
 
 
 ### Infrastructure Setup
@@ -24,12 +24,11 @@ Shibboleth will very likely not work without the proper DNS resolutin.
 Then, you can deploy and configure an enterprise:
 
 ```
-$ ./deploy-nodes.py cloud_config.json enterprise-tiny.json
-$ ./post-deploy-nodes.py setup-output.json
+$ ./deploy-nodes.py cloud-config.json enterprise-tiny.json
+$ ./post-deploy-nodes.py deploy-output.json
 ```
 
-
-This deploys the infrastructure, setups up domain controllers, etc.  Output is written to `setup-output.json` and `post-deploy-output.json`.  
+This deploys the infrastructure, setups up domain controllers, etc.  Output is written to `deploy-output.json` and `post-deploy-output.json`.  
 These files needs to be passed to later stages.
 If `post-deploy-nodes.py` fails,  it is OK to re-run and see if the failure was temporary (e.g., a remote repository being unavailable or a network interference issue).
 
@@ -101,13 +100,13 @@ setup time.
 
 * Run `deploy-nodes.py` and `post-deploy.py` to get a `post-deploy-output.json`.  Run `clean-nodes.py` to remove all nodes.
 
-* Clone `git@github.com:CASTLEGym/castle-vm.git`.  Follow the readme to install preqreqs and provision VMs.  
+* Clone `git@github.com:CASTLEGym/castle-vm.git`.  Follow the README to install preqreqs and provision VMs.  
 
 * Check out the `develop` branch, follow the README to deploy a stack.
 
 * Log into the "workflow" VM, and clone this repository.
 
-* Copy the post-deploy-output.json to the workflow VM.  Modify it such that the addresses array matches the CAGE2 addresses assigned in the heat template.
+* Copy the post-deploy-output.json from the first step to the workflow VM.  Modify it such that the addresses array matches the CAGE2 addresses assigned in the heat template. (TODO: automate this leveraging the heat templates from the castle-vm repo.)
 
 * Run post-deploy.py with the modified post-deploy-output.json to configure the Vandy HEAT-template deployed nodes.  
 

@@ -15,7 +15,7 @@ def setup_moodle_idp (obj):
             ).format(domain_admin_pass)
 
     shell = ShellHandler(control_ipv4_addr,user,"")
-    stdout,stderr,exit_status = shell.execute_powershell(cmd, verbose=verbose)
+    stdout,stderr,exit_status = shell.execute_cmd(cmd, verbose=verbose)
 
     return  {
             "cmd": cmd,
@@ -39,7 +39,7 @@ def setup_moodle_sp(obj):
             ).format(domain_admin_pass)
 
     shell = ShellHandler(control_ipv4_addr,user,"")
-    stdout,stderr,exit_status = shell.execute_powershell(cmd, verbose=verbose)
+    stdout,stderr,exit_status = shell.execute_cmd(cmd, verbose=verbose)
 
     return  {
             "cmd": cmd,

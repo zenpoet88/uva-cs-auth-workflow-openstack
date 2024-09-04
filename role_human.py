@@ -2,6 +2,8 @@ from shell_handler import ShellHandler
 
 verbose = True
 
+human_plugin_version="Downloads/moodle-pyhuman.zip"
+
 
 def node_to_default_user(node):
     user = ""
@@ -26,7 +28,7 @@ def install_human_windows(node,user,control_ipv4_addr,password):
 def install_human_linux(node,user,control_ipv4_addr,password):
     print(f"Installing as user {user}")
     shell = ShellHandler(control_ipv4_addr,user,password, verbose=verbose)
-    shell.put_file('Downloads/pyhuman.zip', '/tmp/pyhuman.zip')
+    shell.put_file(human_plugin_version, '/tmp/pyhuman.zip')
 
     cmd=(
         'set -x ;' +
