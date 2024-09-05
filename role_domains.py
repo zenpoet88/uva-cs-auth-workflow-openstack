@@ -325,7 +325,9 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
     set_allow_password=(
         "set -x ; ip a ; ping -c 3 google.com; ping -c 3 nova.clouds.archive.ubuntu.com ;  "
         "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/'  /etc/ssh/sshd_config; "
+        "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/'  /etc/ssh/sshd_config; "
         "sudo sed -i 's/#PasswordAuthentication /PasswordAuthentication /'  /etc/ssh/sshd_config; "
+        "sudo sed -i 's/KbdInteractiveAuthentication no/KbdInteractiveAuthentication yes/'  /etc/ssh/sshd_config; "
         "sudo rm /etc/ssh/sshd_config.d/60-cloudimg-settings.conf "
     )
 

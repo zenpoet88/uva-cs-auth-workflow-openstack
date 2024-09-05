@@ -2,7 +2,7 @@ from shell_handler import ShellHandler
 
 verbose = True
 
-human_plugin_version="Downloads/moodle-pyhuman.zip"
+human_plugin_version="Downloads/pyhuman-moodle.zip"
 
 
 def node_to_default_user(node):
