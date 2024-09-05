@@ -108,6 +108,8 @@ setup time.
 
 * Copy the post-deploy-output.json from the first step to the workflow VM.  Modify it such that the addresses array matches the CAGE2 addresses assigned in the heat template. (TODO: automate this leveraging the heat templates from the castle-vm repo.)
 
+* Set up DNS entries for the key machines (dc1, service, identity).  DNS entries should point at the game addresses, not the control addresses.  (TODO: Automate this leverage the the heat templates from the castle-vm repo.)
+
 * Run post-deploy.py with the modified post-deploy-output.json to configure the Vandy HEAT-template deployed nodes.  
 
 * Simulate and emulate logins from the workflow VM as per normal (described above).
