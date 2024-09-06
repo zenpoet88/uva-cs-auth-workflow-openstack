@@ -98,18 +98,28 @@ setup time.
 
 # Deploying in Vanderbilt CAGE2 infrastructure.
 
-* Run `deploy-nodes.py` and `post-deploy.py` to get a `post-deploy-output.json`.  Run `clean-nodes.py` to remove all nodes.
+* Run `deploy-nodes.py` and `post-deploy.py` to get a `post-deploy-output.json`.  
+Use a enterprise configuration file that matches the VU deployment you wish to run the workflow on.
+(E.g. cage2-ssh for the ssh workflow, or cage2-shib for the shib and Moodle workflows.)
+Run `clean-nodes.py` to remove all nodes.
 
 * Clone `git@github.com:CASTLEGym/castle-vm.git`.  Follow the README to install preqreqs and provision VMs.  
 
-* Check out the `develop` branch, follow the README to deploy a stack.
+* Check out the `develop` branch, follow the README to deploy a stack (including the UVA workflow stacks).
 
 * Log into the "workflow" VM, and clone this repository.
 
-* Copy the post-deploy-output.json from the first step to the workflow VM.  Modify it such that the addresses array matches the CAGE2 addresses assigned in the heat template. (TODO: automate this leveraging the heat templates from the castle-vm repo.)
+* Copy the post-deploy-output.json from the first step to the workflow VM.  Modify it such that the addresses 
+array matches the CAGE2 addresses assigned in the heat template. This modification can be done manually
+by adding the control and game IPs to the addresses array in the JSON for each machine in the game.  
+For cage2, this can be done with the convenience script called `convert-to-vu-cage2.py`.
 
-* Set up DNS entries for the key machines (dc1, service, identity).  DNS entries should point at the game addresses, not the control addresses.  (TODO: Automate this leverage the the heat templates from the castle-vm repo.)
 
-* Run post-deploy.py with the modified post-deploy-output.json to configure the Vandy HEAT-template deployed nodes.  
+* Set up DNS entries for the key machines (dc1.castle.os, service.castle.os, identity.castle.os).  DNS 
+entries should point at the game addresses, not the control addresses.  
+(TODO: Automate this leverage the the heat templates from the castle-vm repo.  
+While I can do this with designate automatically, I'm not sure that works for VU yet.)
+
+* Run post-deploy.py with the modified post-deploy-output.json to configure the HEAT-template deployed nodes.  
 
 * Simulate and emulate logins from the workflow VM as per normal (described above).
