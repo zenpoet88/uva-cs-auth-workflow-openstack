@@ -2,10 +2,11 @@
 
 import json
 import sys
+import os
 
 
 
-post_deploy_filename = 'post-deploy-output.json'
+deploy_filename = 'deploy-output.json'
 
 global pd
 
@@ -15,30 +16,32 @@ def update_ips(name,control_ip, game_ip):
     for idx, node in enumerate(nodes):
         if node['name'] ==  name:
             print(f"Found {name}, updating IPs.")
-            print(f"addresses = {pd['enterprise_built']['deployed']['nodes'][idx]['addresses']}")
+            #print(f"addresses = {pd['enterprise_built']['deployed']['nodes'][idx]['addresses']}")
             pd['enterprise_built']['deployed']['nodes'][idx]['addresses'][0]['addr']=control_ip
             pd['enterprise_built']['deployed']['nodes'][idx]['addresses'][1]['addr']=game_ip
-            print(f"addresses = {pd['enterprise_built']['deployed']['nodes'][idx]['addresses']}")
+            print(f"addresses  = {pd['enterprise_built']['deployed']['nodes'][idx]['addresses']}")
 
 
-def update_ips(password:str, nodename:str)
+def update_password(keyfile:str, nodename:str):
     nodes = pd['enterprise_built']['deployed']['nodes']
     for idx, node in enumerate(nodes):
         if node['name'] ==  nodename:
-            print(f"Found {name}, updating password.")
-            pd['enterprise_built']['deployed']['nodes'][idx]['password']=nodename
-            print(f"addresses = {pd['enterprise_built']['deployed']['nodes']['password']
+            password = os.popen(f"nova get-password {nodename} {keyfile} 2> /dev/null").read()
+            password = password.strip()
+            print(f"Found {nodename}, updating password.")
+            pd['enterprise_built']['deployed']['nodes'][idx]['password']=password
+            print(f"password = '{pd['enterprise_built']['deployed']['nodes'][idx]['password']}'")
+            print("Password updated")
 
 def main():
     global pd
     if len(sys.argv) < 2:
         print(f"usage: {sys.argv[0]} <castle-control key file>")
+        return
 
     keyfile=sys.argv[1]
 
-    password = os.popen(f"nova get-password dc1 {keyfile} 2> /dev/null").read()
-
-    with open(post_deploy_filename) as f:
+    with open(deploy_filename) as f:
         # Read the file
         pd = json.load(f)
 
@@ -62,10 +65,11 @@ def main():
     # subnet1-router: not present in workflow
     # subnet2-router: not present in workflow
 
-    update_pasword(password)
+    update_password(keyfile, 'dc1')
+    update_password(keyfile, 'dc2')
 
 
-    with open("post-deploy-output-vu-cage2.json", "w") as f:
+    with open("deploy-output-vu-cage2.json", "w") as f:
         json.dump(pd,f)
 
 

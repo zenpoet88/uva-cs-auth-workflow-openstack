@@ -103,9 +103,10 @@ Use a enterprise configuration file that matches the VU deployment you wish to r
 (E.g. cage2-ssh for the ssh workflow, or cage2-shib for the shib and Moodle workflows.)
 Run `clean-nodes.py` to remove all nodes.
 
-* Clone `git@github.com:CASTLEGym/castle-vm.git`.  Follow the README to install preqreqs and provision VMs.  
+* Clone `git@github.com:CASTLEGym/castle-vm.git`.  
 
-* Check out the `develop` branch, follow the README to deploy a stack (including the UVA workflow stacks).
+* Check out the `develop` branch, follow the README to deploy and provision the CAGE2 environment (including the UVA workflow stacks).
+Make sure you follow the section at the end of the README about deploying workflows.
 
 * Log into the "workflow" VM, and clone this repository.
 
@@ -113,6 +114,22 @@ Run `clean-nodes.py` to remove all nodes.
 array matches the CAGE2 addresses assigned in the heat template. This modification can be done manually
 by adding the control and game IPs to the addresses array in the JSON for each machine in the game.  
 For cage2, this can be done with the convenience script called `convert-to-vu-cage2.py`.
+```
+cd /path/to/uva-workflows
+./convert-to-vu-cage2.py ../../castle-vm/CreateVMs/VelociraptorVMs/secrets/castle-control
+cd /path/to/castle-vm
+ssh-keygen -f "/home/jdh8d/.ssh/known_hosts" -R "workflow.castle.os"
+scp -i CreateVMs/VelociraptorVMs/secrets/castle-control CreateVMs/VelociraptorVMs/secrets/castle-control ubuntu@workflow.castle.os:~/.ssh
+scp -i CreateVMs/VelociraptorVMs/secrets/castle-control ~/.ssh/id_rsa ubuntu@workflow.castle.os:~/.ssh
+scp -i CreateVMs/VelociraptorVMs/secrets/castle-control ../uva_workflows/uva-cs-auth-workflow-openstack/deploy-output-vu-cage2.json ubuntu@workflow.castle.os:~/deploy-output.json 
+ssh -i CreateVMs/VelociraptorVMs/secrets/castle-control ubuntu@workflow.castle.os
+git clone git@github.com:jdhiser/uva-cs-auth-workflow-openstack.git workflow
+mv deploy-output.json  workflow
+cd workflow
+./setup.sh
+./post-deploy.py deploy-output.json
+
+```
 
 
 * Set up DNS entries for the key machines (dc1.castle.os, service.castle.os, identity.castle.os).  DNS 
