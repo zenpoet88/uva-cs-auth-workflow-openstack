@@ -141,3 +141,16 @@ While I can do this with designate automatically, I'm not sure that works for VU
 * Run post-deploy.py with the modified post-deploy-output.json to configure the HEAT-template deployed nodes.  
 
 * Simulate and emulate logins from the workflow VM as per normal (described above).
+
+# Debugging
+
+It's python code, debug with your favorite debugger.  However, it's worth noting that 
+most files have a "verbose" global variable so you can turn on verbose logging output 
+for that file only.  Further, there is a `use_parallel` in the post-deploy script to 
+sequentialize the deployment of nodes, which makes the verbose output much clearer.
+
+Almost all input/output from remote machines is captured to the output file of every step.
+You can load the output file into any JSON viewer (recommend something like Firefox)
+and browse to output for each step.  These outputs can help diagnose connection issues,
+etc.
+
