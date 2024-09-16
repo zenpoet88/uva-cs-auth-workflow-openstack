@@ -126,6 +126,7 @@ ssh -i CreateVMs/VelociraptorVMs/secrets/castle-control ubuntu@workflow.castle.o
 git clone git@github.com:jdhiser/uva-cs-auth-workflow-openstack.git workflow
 mv deploy-output.json  workflow
 cd workflow
+git checkout -b pi_meeting_oct_2024
 ./setup.sh
 mv ~/.ssh/castle-control ~/.ssh/id_rsa
 ./post-deploy.py deploy-output.json

@@ -98,7 +98,7 @@ class OpenstackCloud:
         return self.cloud_config['image_map'][os_name]
 
     def size_to_flavor(self,size_name):
-        return self.cloud_config['instance_size_map'].get('size',"m1.small")
+        return self.cloud_config['instance_size_map'].get(size_name,"m1.small")
 
     def find_image_by_name(self,name):
         images = self.glclient.images.list()
@@ -151,7 +151,7 @@ class OpenstackCloud:
             keypair = self.cloud_config['keypair']
 
             image = self.os_to_image(os_name)
-            flavor = self.size_to_flavor(os_name)
+            flavor = self.size_to_flavor(size)
             security_group = self.cloud_config['security_group']
             all_groups = self.conn.list_security_groups({"name": security_group})
             if not len(all_groups) == 1:
