@@ -239,7 +239,7 @@ def main():
     days_to_simulate=10
 
     if len(sys.argv) != 3 and len(sys.argv) != 4:
-        print("Usage:  python " + sys.argv[0] + " user-roles.json enterprise.json [post-deploy-output.json]")
+        print("Usage:  " + sys.argv[0] + " user-roles.json enterprise.json [post-deploy-output.json]")
         sys.exit(1)
 
 

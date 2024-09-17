@@ -187,7 +187,7 @@ def schedule_logins(logins_file, setup_output_file, fast_debug = False):
 
 def main():
     if len(sys.argv) != 3 and len(sys.argv) != 4:
-        print(f"Usage: python {sys.argv[0]} post-deploy-output.json logins.json ( --fast-debug )" )
+        print(f"Usage: {sys.argv[0]} post-deploy-output.json logins.json ( --fast-debug )" )
         sys.exit(1)
 
     fast_debug = (len(sys.argv) == 4)

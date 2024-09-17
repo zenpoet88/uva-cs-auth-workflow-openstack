@@ -39,7 +39,7 @@ def deploy_enterprise(cloud_config,enterprise):
 def main():
 
     if len(sys.argv) != 3:
-        print("Usage:  python " + sys.argv[0] + " cloud-config.json enterprise.json")
+        print("Usage: " + sys.argv[0] + " cloud-config.json enterprise.json")
         sys.exit(1)
 
     json_output = {}

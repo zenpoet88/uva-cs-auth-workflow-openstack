@@ -8,6 +8,12 @@
 			"roles": [ "domain_controller_leader", "windows" ]
 		},
 		{
+			"name": "dc2" ,
+			"os": "win2k22",
+			"domain": "castle",
+			"roles": [ "domain_controller", "windows" ]
+		},
+		{
 			"name": "user-host_1",
 			"os": "jammy",
 			"domain": "castle",
