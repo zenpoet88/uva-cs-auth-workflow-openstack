@@ -32,6 +32,9 @@ def update_password(keyfile:str, nodename:str):
             pd['enterprise_built']['deployed']['nodes'][idx]['password']=password
             print(f"password = '{pd['enterprise_built']['deployed']['nodes'][idx]['password']}'")
             print("Password updated")
+            return 
+        print(f"Examining node {node['name']}")
+    print(f"Could not find node with name {nodename}")
 
 def main():
     global pd
