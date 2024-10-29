@@ -75,7 +75,7 @@ def deploy_forest(cloud_config,name,control_ipv4_addr, game_ipv4_addr,password,d
 
 
     remove_control_network_from_dns_cmd = (
-            "set-dnsclient -interfacealias 'Ethernet Instance 0 2' -registerthisconnectionsaddress 0 ; "
+            "set-dnsclient -interfacealias 'control-adapter' -registerthisconnectionsaddress 0 ; "
             " $srv=$(get-dnsserversetting -all) ;"
             " $srv.ListeningIPAddress=@( $srv.ListeningIPAddress[1]) ;"
             " set-dnsserversetting -inputobject $srv; "
@@ -116,8 +116,8 @@ def add_domain_controller(cloud_config,leader_details,name,control_ipv4_addr, ga
     adcmd =(
         "Install-windowsfeature AD-domain-services ; "
         "Import-Module ADDSDeployment ;  "
-        "Set-DnsClientServerAddress -serveraddress ('{}') -interfacealias 'Ethernet Instance 0' ; "
-        "Set-DnsClientServerAddress -serveraddress ('{}') -interfacealias 'Ethernet Instance 0 2' ; "
+        "Set-DnsClientServerAddress -serveraddress ('{}') -interfacealias 'game-adapter' ; "
+        "Set-DnsClientServerAddress -serveraddress ('{}') -interfacealias 'control-adapter' ; "
         "$passwd = convertto-securestring -AsPlainText -Force -String '{}' ; "
         "$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist '{}\\administrator',$passwd ; "
         "$secure=ConvertTo-SecureString -asplaintext -string '{}' -force ; "
@@ -261,7 +261,7 @@ def join_domain_windows(name, leader_admin_password, control_ipv4_addr, game_ipv
     cmd=(
         "$passwd = convertto-securestring -AsPlainText -Force -String {} ; "
         "$cred = new-object -typename System.Management.Automation.PSCredential -argumentlist 'administrator@{}',$passwd ; "
-        "Set-DnsClientServerAddress -serveraddress ({}) -interfacealias 'Ethernet Instance 0' ; "
+        "Set-DnsClientServerAddress -serveraddress ({}) -interfacealias 'game-adapter' ; "
         "Add-Computer -Credential $cred -domainname {};" 
         "wget https://www.python.org/ftp/python/3.12.1/python-3.12.1-embed-amd64.zip -Outfile python.zip; "
         "Expand-Archive -force .\python.zip; "
