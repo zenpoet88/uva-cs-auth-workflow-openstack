@@ -172,7 +172,7 @@ def add_domain_controller(cloud_config,leader_details,name,control_ipv4_addr, ga
     except socket.error:
         pass
 
-    print("  Waiting for reboot of windows node with ip={} (Expect socket closed by peer messages).".format(control_ipv4_addr))
+    print("  Waiting for reboot of windows node with ip={} (Expect socket error messages).".format(control_ipv4_addr))
     time.sleep(10)
     status_received = False
     attempts = 0
@@ -181,6 +181,10 @@ def add_domain_controller(cloud_config,leader_details,name,control_ipv4_addr, ga
             attempts += 1
             shell = ShellHandler(control_ipv4_addr,user,leader_admin_password)
             stdout2,stderr2,exit_status2 = shell.execute_powershell("get-addomain", verbose=verbose)
+            if not 'ReplicaDirectoryServers' in str(stdout2):
+                print("Connected, waiting for AD to start up.") 
+                time.sleep(2)
+                continue
             status_received=True
             stdout.append(stdout2)
             stderr.append(stderr2)
