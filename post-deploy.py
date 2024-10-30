@@ -11,7 +11,7 @@ import role_moodle
 from datetime import datetime
 from joblib import Parallel, delayed
 
-use_parallel=True
+use_parallel=False
 verbose=not use_parallel
 
 
@@ -112,6 +112,7 @@ def deploy_human(cloud_config,enterprise,enterprise_built):
         access_list.append({
             "node": node, 
             "control_addr": control_ipv4_addr, 
+            "cloud_config": cloud_config, 
             "game_addr": game_ipv4_addr, 
             "password": str(password) 
         })
@@ -145,6 +146,7 @@ def setup_moodle_idps(cloud_config,enterprise,enterprise_built):
         control_ipv4_addr,game_ipv4_addr,password = extract_creds(enterprise_built,name)
         access_list.append({
             "node": node, 
+            "cloud_config": cloud_config, 
             "domain_leader": leader_details[domain], 
             "control_addr": control_ipv4_addr, 
             "game_addr": game_ipv4_addr, 
@@ -181,6 +183,7 @@ def setup_moodle_sps(cloud_config,enterprise,enterprise_built):
         access_list.append({
             "node": node, 
             "domain_leader": leader_details[domain], 
+            "cloud_config": cloud_config, 
             "control_addr": control_ipv4_addr, 
             "game_addr": game_ipv4_addr, 
             "password": str(password) 
@@ -205,8 +208,8 @@ def setup_enterprise(cloud_config,to_build,built):
     built['setup']={}
     built['setup']['windows_register'] = register_windows(cloud_config,to_build,built)
     built['setup']['setup_domains'] = deploy_domain_controllers(cloud_config,to_build,built)
-    built['setup']['join_domains'] = join_domains(cloud_config,to_build,built)
-    built['setup']['deploy_human'] = deploy_human(cloud_config,to_build,built)
+#    built['setup']['join_domains'] = join_domains(cloud_config,to_build,built)
+#    built['setup']['deploy_human'] = deploy_human(cloud_config,to_build,built)
     built['setup']['setup_moodle_idps'] = setup_moodle_idps(cloud_config,to_build,built)
     built['setup']['setup_moodle_sps'] = setup_moodle_sps(cloud_config,to_build,built)
 
