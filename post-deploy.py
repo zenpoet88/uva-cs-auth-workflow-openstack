@@ -208,8 +208,8 @@ def setup_enterprise(cloud_config,to_build,built):
     built['setup']={}
     built['setup']['windows_register'] = register_windows(cloud_config,to_build,built)
     built['setup']['setup_domains'] = deploy_domain_controllers(cloud_config,to_build,built)
-#    built['setup']['join_domains'] = join_domains(cloud_config,to_build,built)
-#    built['setup']['deploy_human'] = deploy_human(cloud_config,to_build,built)
+    built['setup']['join_domains'] = join_domains(cloud_config,to_build,built)
+    built['setup']['deploy_human'] = deploy_human(cloud_config,to_build,built)
     built['setup']['setup_moodle_idps'] = setup_moodle_idps(cloud_config,to_build,built)
     built['setup']['setup_moodle_sps'] = setup_moodle_sps(cloud_config,to_build,built)
 
