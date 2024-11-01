@@ -6,7 +6,7 @@ from shell_handler import ShellHandler
 
 
 domain_safe_mode_password = 'hello!321' # generate_password(12)
-verbose = True
+verbose = False
 
 def deploy_forest(cloud_config,name,control_ipv4_addr, game_ipv4_addr,password,domain):
 

@@ -1,6 +1,6 @@
 from shell_handler import ShellHandler
 
-verbose = True
+verbose = False
 
 human_plugin_version="Downloads/pyhuman-moodle.zip"
 

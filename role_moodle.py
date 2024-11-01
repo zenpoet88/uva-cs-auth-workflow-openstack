@@ -1,6 +1,6 @@
 from shell_handler import ShellHandler
 
-verbose = True
+verbose = False
 
 def setup_moodle_idp (obj):
     control_ipv4_addr=obj['control_addr']
