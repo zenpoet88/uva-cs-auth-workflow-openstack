@@ -24,7 +24,7 @@ Shibboleth and Moodle will not work without the proper DNS resolution.
 Then, you can deploy and configure an enterprise:
 
 ```
-$ ./deploy-nodes.py cloud-config.json enterprise-tiny.json
+$ ./deploy-nodes.py cloud-configs/cloud-config.json enterprise-configs/enterprise-tiny.json
 $ ./post-deploy.py deploy-output.json
 ```
 
@@ -40,11 +40,13 @@ two Openstack deployments at UVA.  While this is setup to support any cloud infr
 only Openstack is currently supported.  See [`cloud-config.md`](./cloud-configs/cloud-config.md) for more details about writing
 your own configuration.
 
-To sanity check that your ssh keys and DNS are configured properly, you should be able to ping the various machines setup in your cloud config and enterprise config files, as well as ssh without a password into Linux VMs. For example, if the `enterprise_url` field in your cloud config is `castle.os`, and you have a Linux machine named `linep1` in your enterprise config,
+To sanity check that your ssh keys and DNS are configured properly, you should be able to ping the various machines setup in your cloud config and enterprise config files, as well as ssh without a password into Linux VMs. 
+
+For example, if the `enterprise_url` field in your cloud config is `castle.os`, and you have a Linux machine named `linep1` in your enterprise config,
 you should be able to:
 
 1. `ping linep1.castle.os`
-2. `nslookup <name>.castle.os` # where <name> are names defined in your enterprise config file
+2. `nslookup <name>.castle.os` # where *name* is any machine name defined in your enterprise config file
 3. `ssh ubuntu@linep1.castle.os`
 
 ### Simulation
@@ -52,7 +54,7 @@ you should be able to:
 Next, you can generate logins for the deployed infrastrcuture:
 
 ```
-$ ./simulate-logins.py  user-roles.json enterprise-tiny.json
+$ ./simulate-logins.py  user-roles/user-roles.json enterprise-configs/enterprise-tiny.json
 ```
 
 This generates users and estimates a login behavior for these users based on settings in the enterprise.json file
@@ -63,7 +65,7 @@ Output is written to logins.json, used in later stages.
 If you also want to emulate logins (next section), you will also need to install users into the enterprise.  You can do that by adding the enterprise description created when deploying the enterprise to the `simulate-logins` command.
 
 ```
-$ ./simulate-logins.py  user-roles/user-roles.json enterprise-config/web-wf.json post-deploy-output.json
+$ ./simulate-logins.py  user-roles/user-roles.json enterprise-configs/web-wf.json post-deploy-output.json
 ```
 
 

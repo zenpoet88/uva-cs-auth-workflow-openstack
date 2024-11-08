@@ -243,7 +243,7 @@ class OpenstackCloud:
     def create_zones(self,enterprise,ret):
         enterprise_url = self.cloud_config['enterprise_url']
         print("Creating DNS zone " + enterprise_url)
-        ret['create_zones'] = self.designateClient.zones.create(enterprise_url+".", email="root@"+enterprise_url)
+        ret['create_zones'] = self.designateClient.zones.create(enterprise_url+".", email="root@"+enterprise_url, ttl=60)
         return ret
    
     def create_dns_names(self,enterprise,ret):
