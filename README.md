@@ -46,7 +46,7 @@ For example, if the `enterprise_url` field in your cloud config is `castle.os`, 
 you should be able to:
 
 1. `ping linep1.castle.os`
-2. `nslookup <name>.castle.os` # where <name> are names defined in your enterprise config file
+2. `nslookup <name>.castle.os` # where *name* is any machine name defined in your enterprise config file
 3. `ssh ubuntu@linep1.castle.os`
 
 ### Simulation
