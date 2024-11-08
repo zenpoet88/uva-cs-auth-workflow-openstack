@@ -25,20 +25,27 @@ Then, you can deploy and configure an enterprise:
 
 ```
 $ ./deploy-nodes.py cloud-config.json enterprise-tiny.json
-$ ./post-deploy-nodes.py deploy-output.json
+$ ./post-deploy.py deploy-output.json
 ```
 
 This deploys the infrastructure, setups up domain controllers, etc.  Output is written to `deploy-output.json` and `post-deploy-output.json`.  
 These files needs to be passed to later stages.
 If `post-deploy-nodes.py` fails,  it is OK to re-run and see if the failure was temporary (e.g., a remote repository being unavailable or a network interference issue).
 
-Some sample enterprises are included.  See [`enterprise.md`](./enterprise/enterprise.md) for more details about these
+Some sample enterprises are included.  See [`enterprise.md`](./enterprise-configs/enterprise.md) for more details about these
 files and how to create your own.
 
 Sample cloud configurations are included (e.g., `mtx.json` and `shen.json`).  These are for
 two Openstack deployments at UVA.  While this is setup to support any cloud infrastructure to deploy an enterprise,
-only Openstack is currently supported.  See [`cloud-config.md`](./cloud-config/cloud-config.md) for more details about writing
+only Openstack is currently supported.  See [`cloud-config.md`](./cloud-configs/cloud-config.md) for more details about writing
 your own configuration.
+
+To sanity check that your ssh keys and DNS are configured properly, you should be able to ping the various machines setup in your cloud config and enterprise config files, as well as ssh without a password into Linux VMs. For example, if the `enterprise_url` field in your cloud config is `castle.os`, and you have a Linux machine named `linep1` in your enterprise config,
+you should be able to:
+
+1. `ping linep1.castle.os`
+2. `nslookup <name>.castle.os` # where <name> are names defined in your enterprise config file
+3. `ssh ubuntu@linep1.castle.os`
 
 ### Simulation
 

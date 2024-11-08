@@ -32,6 +32,13 @@ or prompt the user for things like passwords (less preferred), etc.
  * `security-group` - string. The security group to use when creating nodes.  It is recommended that you create a rule
  where all traffic is allowed, but at a minimum, SSH, HTTP, HTTPS, LDAP and Active Directory must be allowed.
 
+	```
+        # Example of super permissive policy
+        openstack security group create All_Traffic --description "Allow all traffic"
+        openstack security group rule create --proto any --ingress All_Traffic
+        openstack security group rule create --proto any --egress All_Traffic
+	```
+
  * `enterprise_url` - string.  The url for your enterprise that's used to create a domain.
  For now, recommend that this stays as `castle.os` due to pre-built images having this hard-coded in several places.
 
