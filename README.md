@@ -65,7 +65,7 @@ Output is written to logins.json, used in later stages.
 If you also want to emulate logins (next section), you will also need to install users into the enterprise.  You can do that by adding the enterprise description created when deploying the enterprise to the `simulate-logins` command.
 
 ```
-$ ./simulate-logins.py  user-roles/user-roles.json enterprise-config/web-wf.json post-deploy-output.json
+$ ./simulate-logins.py  user-roles/user-roles.json enterprise-configs/web-wf.json post-deploy-output.json
 ```
 
 
