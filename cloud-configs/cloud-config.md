@@ -1,6 +1,6 @@
 
 
-# Configuraiton Documentation
+# Configuration Documentation
 
 ## Top level items
  * `cloud_type` - string.  The backend type used for creating an enterprise.  Must be one of "openstack".
