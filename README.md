@@ -24,7 +24,7 @@ Shibboleth and Moodle will not work without the proper DNS resolution.
 Then, you can deploy and configure an enterprise:
 
 ```
-$ ./deploy-nodes.py cloud-config.json enterprise-tiny.json
+$ ./deploy-nodes.py cloud-configs/cloud-config.json enterprise-configs/enterprise-tiny.json
 $ ./post-deploy.py deploy-output.json
 ```
 
@@ -54,7 +54,7 @@ you should be able to:
 Next, you can generate logins for the deployed infrastrcuture:
 
 ```
-$ ./simulate-logins.py  user-roles.json enterprise-tiny.json
+$ ./simulate-logins.py  user-roles/user-roles.json enterprise-configs/enterprise-tiny.json
 ```
 
 This generates users and estimates a login behavior for these users based on settings in the enterprise.json file
