@@ -128,13 +128,14 @@ class OpenstackCloud:
         return found_image
 
     def find_network_by_name(self, name):
-        ret = self.neutronClient.list_networks(name=name, project_id=self.sess.auth.project_id)
+        ret = self.neutronClient.list_networks()
         networks = ret['networks']
         found_network = None
         for network in networks:
-            if network['name'] == name and found_network is None:
+            found = network['id'] == name or network['name'] == name 
+            if found and found_network is None:
                 found_network = network
-            elif network['name'] == name and found_network is not None:
+            elif found and found_network is not None:
                 str_value = f"Duplicate networks named {name}"
                 raise NameError(str_value)
         if found_network is None:
@@ -163,9 +164,9 @@ class OpenstackCloud:
             flavor = self.size_to_flavor(size)
             security_group = self.cloud_config['security_group']
             all_groups = self.conn.list_security_groups()
-            project_groups = [x for x in all_groups if x.location.project.id == self.project_id and x.name == security_group]
+            project_groups = [x for x in all_groups if ( x.name == security_group  or x.id == security_group ) ]
             if not len(project_groups) == 1:
-                errstr = "Found 0 or more than 1 security groups called " + security_group + "\n" + str(all_groups)
+                errstr = "Found 0 or more than 1 security groups called " + security_group + "\n" + str(project_groups)
                 raise RuntimeError(errstr)
 
             network = node.get('network', self.cloud_config['external_network'])
@@ -173,6 +174,7 @@ class OpenstackCloud:
             nova_image = self.find_image_by_name(image)
             # nova_flavor = self.nova_sess.flavors.find(name=flavor)
             nova_net = self.find_network_by_name(network)
+            self.network_name = nova_net['name']
             nova_nics = [{'net-id': nova_net['id']}]
             nova_instance = self.conn.create_server(
                 name=name,
@@ -298,7 +300,11 @@ class OpenstackCloud:
             name = node['name']
             enterprise_node = next(filter(lambda x: name == x['name'], enterprise['nodes']))
             nova_instance = self.nova_sess.servers.get(id_value)
-            node['addresses'] = [x[0] for x in nova_instance.addresses.values()]
+            print(f"Addresses = {nova_instance.addresses}");
+            node['addresses']=[
+                    nova_instance.addresses[self.network_name][0], # control address -- as we don't have this yet, just use the flat network
+                    nova_instance.addresses[self.network_name][0]  # game address    -- as we don't have this yet, just use the flat network
+                    ]
 
             if 'windows' not in enterprise_node['roles']: 
                 print("Skipping password retrieve for non-windows node " + name)
