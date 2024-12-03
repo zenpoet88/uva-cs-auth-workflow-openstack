@@ -112,6 +112,10 @@ def emulate_login(number, login, user_data, built):
             stdout2,stderr2, exit_status2 = shell.execute_cmd(cmd2, verbose=True)
 
 
+        if is_windows:
+            print(f"ssh successful for linux")
+        else:
+            print(f"ssh successful for windows")
         if not del_command is None:
             os.system(del_command)
     except KeyboardInterrupt:
@@ -119,7 +123,10 @@ def emulate_login(number, login, user_data, built):
         raise
     except Exception as e:
         print("");
-        print(f"FAILED CONNECTION: At {datetime.now()}, Failed connect to user = {username}@{domain}@{targ_ip}, password = {password}")
+        if is_windows:
+            print(f"FAILED CONNECTION windows: At {datetime.now()}, Failed connect to user = {username}@{domain}@{targ_ip}, password = {password}")
+        else:
+            print(f"FAILED CONNECTION linux: At {datetime.now()}, Failed connect to user = {username}@{domain}@{targ_ip}, password = {password}")
         print(f"{e}")
         traceback.print_exception(e)
         pass
