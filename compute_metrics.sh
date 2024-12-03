@@ -27,14 +27,14 @@ compute_availability_for_ssh() {
 	echo "=== Metrics for ssh linux"
 	echo "SSH-linux: availability=$ssh_availability_linux"
 	echo "SSH-linux: num_started=$ssh_attempts_linux"
-	echo "SSH-linux: num_done=$ssh_success_linux"
+	echo "SSH-linux: num_success=$ssh_success_linux"
 	echo "SSH-linux: num_err=$ssh_failed_linux"
 
 	echo
 	echo "=== Metrics for ssh windows"
 	echo "SSH-windows: availability=$ssh_availability_windows"
 	echo "SSH-windows: num_started=$ssh_attempts_windows"
-	echo "SSH-windows: num_done=$ssh_success_windows"
+	echo "SSH-windows: num_success=$ssh_success_windows"
 	echo "SSH-windows: num_err=$ssh_failed_windows"
 
 	ssh_attempts=$((ssh_attempts_linux + ssh_attempts_windows))
@@ -46,75 +46,75 @@ compute_availability_for_ssh() {
 	echo "=== Metrics for ssh windows and linux"
 	echo "SSH: availability=$ssh_availability"
 	echo "SSH: num_started=$ssh_attempts"
-	echo "SSH: num_done=$ssh_success"
+	echo "SSH: num_success=$ssh_success"
 	echo "SSH: num_err=$ssh_failed"
 }
 
 compute_availability_for_workflow() {
 	workflow_name=$1
 
-	start_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep $workflow_name | grep start | wc -l )
-	done_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep $workflow_name | grep done | wc -l )
+	start_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep $workflow_name | grep '"start"' | wc -l )
+	success_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep $workflow_name | grep '"success"' | wc -l )
 	err_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep $workflow_name | grep error | wc -l )
 
-	availability=$( echo "scale=4; $done_count / $start_count" | bc )
+	availability=$( echo "scale=4; $success_count / $start_count" | bc )
 	
 	echo
 	echo "=== Metrics for $workflow_name"
 	echo "Workflow $workflow_name: availability=$availability"
 	echo "Workflow $workflow_name: num_started=$start_count"
-	echo "Workflow $workflow_name: num_done=$done_count"
+	echo "Workflow $workflow_name: num_success=$success_count"
 	echo "Workflow $workflow_name: num_err=$err_count"
 }
 
 compute_availability_for_workflow_by_steps() {
 	workflow_name=$1
 
-	start_count=$( grep workflow_name $Workflow_log | grep step_name | grep start | wc -l )
-	done_count=$( grep workflow_name $Workflow_log | grep step_name | grep done | wc -l )
+	start_count=$( grep workflow_name $Workflow_log | grep step_name | grep '"start"' | wc -l )
+	success_count=$( grep workflow_name $Workflow_log | grep step_name | grep '"success"' | wc -l )
 	err_count=$( grep workflow_name $Workflow_log | grep step_name | grep error | wc -l )
 
-	availability=$( echo "scale=4; $done_count / $start_count" | bc )
+	availability=$( echo "scale=4; $success_count / $start_count" | bc )
 	
 	echo
 	echo "=== Metrics for $workflow_name by steps"
 	echo "Workflow $workflow_name steps: availability=$availability"
 	echo "Workflow $workflow_name steps: num_started=$start_count"
-	echo "Workflow $workflow_name steps: num_done=$done_count"
+	echo "Workflow $workflow_name steps: num_success=$success_count"
 	echo "Workflow $workflow_name steps: num_err=$err_count"
 }
 
 compute_availability_for_all_workflows() {
 	workflow_name=$1
 
-	start_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep status | grep start | wc -l )
-	done_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep status | grep done | wc -l )
+	start_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep '"start"' | wc -l )
+	success_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep '"success"' | wc -l )
 	err_count=$( grep workflow_name $Workflow_log | grep -v step_name | grep status | grep error | wc -l )
 
-	availability=$( echo "scale=4; $done_count / $start_count" | bc )
+	availability=$( echo "scale=4; $success_count / $start_count" | bc )
 	
 	echo
 	echo "=== Metrics for all workflows"
 	echo "All workflows: availability=$availability"
 	echo "All workflows: num_started=$start_count"
-	echo "All workflows: num_done=$done_count"
+	echo "All workflows: num_success=$success_count"
 	echo "All workflows: num_err=$err_count"
 }
 
 compute_availability_for_all_workflows_by_steps() {
 	workflow_name=$1
 
-	start_count=$( grep workflow_name $Workflow_log | grep step_name | grep status | grep start | wc -l )
-	done_count=$( grep workflow_name $Workflow_log | grep step_name | grep status | grep done | wc -l )
+	start_count=$( grep workflow_name $Workflow_log | grep step_name | grep '"start"' | wc -l )
+	success_count=$( grep workflow_name $Workflow_log | grep step_name | grep '"success"' | wc -l )
 	err_count=$( grep workflow_name $Workflow_log | grep step_name | grep status | grep error | wc -l )
 
-	availability=$( echo "scale=4; $done_count / $start_count" | bc )
+	availability=$( echo "scale=4; $success_count / $start_count" | bc )
 	
 	echo
 	echo "=== Metrics for all workflows by steps"
 	echo "All workflow steps: availability=$availability"
 	echo "All workflow steps: num_started=$start_count"
-	echo "All workflow steps: num_done=$done_count"
+	echo "All workflow steps: num_success=$success_count"
 	echo "All workflow steps: num_err=$err_count"
 }
 
@@ -130,5 +130,6 @@ done
 compute_availability_for_all_workflows
 compute_availability_for_all_workflows_by_steps
 
+echo 
 echo "Metrics computed for workflows: ssh ${workflows}"
 

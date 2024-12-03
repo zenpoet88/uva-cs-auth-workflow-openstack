@@ -113,9 +113,9 @@ def emulate_login(number, login, user_data, built):
 
 
         if is_windows:
-            print(f"ssh successful for linux")
-        else:
             print(f"ssh successful for windows")
+        else:
+            print(f"ssh successful for linux")
         if not del_command is None:
             os.system(del_command)
     except KeyboardInterrupt:
