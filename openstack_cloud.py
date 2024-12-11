@@ -299,7 +299,6 @@ class OpenstackCloud:
         return ret
 
     def collect_info(self, enterprise, enterprise_built):
-        network = self.cloud_config['external_network']
         ret = enterprise_built
         for node in enterprise_built['nodes']:
             id_value = node['id']
@@ -345,11 +344,16 @@ class OpenstackCloud:
         for node in ret['nodes']:
             to_deploy_name = node['name']
             addresses = node['addresses']
-            address = addresses[0]['addr']
+
+
+            # The DNS records must contain the GAME addresses (if they exist).
+            # Otherwise, any time an end point tries to refer to the node, it will use
+            # The control address, and send all the data over the control network.
+            address = addresses[-1]['addr']
             print(f"Creating DNS zone {to_deploy_name}@{enterprise_url}/{address} ")
             try:
                 node['dns_setup'] = self.designateClient.recordsets.create(zone, to_deploy_name, 'A', [address])
-            except designate_client.exceptions.Conflict as c:
+            except designate_client.exceptions.Conflict as _:
                 print(f"WARNING:  already a DNS record for {to_deploy_name}")
         return ret
 

@@ -22,7 +22,7 @@ def setup_moodle_idp (obj):
             "sudo sed -i 's/^idp.authn.LDAP.dnFormat.*/idp.authn.LDAP.dnFormat= %s@{}.{}/' /opt/shibboleth-idp/conf/ldap.properties; ".format(domain,enterprise_url) + 
             "sudo sed -i 's/CN=Users,DC=castle,DC=castle,DC=os/CN=Users,DC={},{}/' /opt/shibboleth-idp/conf/ldap.properties; ".format(domain,new_ldap_domain) +
             "if [[ -e /etc/ssl/certs/identity.castle.os.crt  ]]; then " +
-                "sudo sed -i -e 's/castle.castle.os/{}/g' -e 's/castle.os/{}/g' /opt/shibboleth-idp/conf/idp.properties /opt/shibboleth-idp/conf/attribute-resolver.xml /opt/shibboleth-idp/conf/ldap.properties /etc/apache2/sites-available/identity.castle.os.conf /opt/shibboleth-idp/metadata/idp-metadata.xml /opt/shibboleth-idp/metadata/moodle-md.xml /opt/shibboleth-idp/metadata/sp-metadata.xml ; ".format(domain, enterprise_url, enterprise_url) +
+                "sudo sed -i -e 's/castle.castle.os/{}.{}/g' -e 's/castle.os/{}/g' /opt/shibboleth-idp/conf/idp.properties /opt/shibboleth-idp/conf/attribute-resolver.xml /opt/shibboleth-idp/conf/ldap.properties /etc/apache2/sites-available/identity.castle.os.conf /opt/shibboleth-idp/metadata/idp-metadata.xml /opt/shibboleth-idp/metadata/moodle-md.xml /opt/shibboleth-idp/metadata/sp-metadata.xml ; ".format(domain, enterprise_url, enterprise_url) +
                 "sudo mv /var/www/html/identity.castle.os /var/www/html/identity.{} ; ".format(enterprise_url) +
                 "sudo mv /etc/ssl/certs/identity.castle.os.crt /etc/ssl/certs/identity.{}.crt;".format(enterprise_url) +
                 "sudo mv /etc/ssl/private/identity.castle.os.key /etc/ssl/private/identity.{}.key;".format(enterprise_url) +
