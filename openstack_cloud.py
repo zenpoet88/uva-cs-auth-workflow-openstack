@@ -27,7 +27,7 @@ class OpenstackCloud:
 
     def get_session(self):
         options = argparse.ArgumentParser(description='Awesome OpenStack App')
-        self.conn = openstack.connect(options=options)
+        self.conn = openstack.connect(options=options, verify=False)
 
         """Return keystone session"""
 
@@ -47,7 +47,7 @@ class OpenstackCloud:
 
         # Create OpenStack keystoneauth1 session.
         # https://goo.gl/BE7YMt
-        sess = session.Session(auth=auth, verify=os.environ.get('OS_CACERT'))
+        sess = session.Session(auth=auth, verify=False)
 
         return sess
 
@@ -234,7 +234,7 @@ class OpenstackCloud:
             flavor = self.size_to_flavor(size)
             security_group = self.cloud_config['security_group']
             all_groups = self.conn.list_security_groups()
-            project_groups = [x for x in all_groups if x.location.project.id == self.project_id and x.name == security_group]
+            project_groups = [ x for x in all_groups if (x.location.project.id == self.project_id and x.name == security_group ) or x.id == security_group ]
             if not len(project_groups) == 1:
                 errstr = "Found 0 or more than 1 security groups called " + security_group + "\n" + str(all_groups)
                 raise RuntimeError(errstr)
@@ -305,11 +305,15 @@ class OpenstackCloud:
             name = node['name']
             enterprise_node = next(filter(lambda x: name == x['name'], enterprise['nodes']))
             nova_instance = self.nova_sess.servers.get(id_value)
-            print(f"Addresses = {nova_instance.addresses}");
-            node['addresses']=[
-                    nova_instance.addresses[self.network_name][0], # control address -- as we don't have this yet, just use the flat network
-                    nova_instance.addresses[self.network_name][0]  # game address    -- as we don't have this yet, just use the flat network
-                    ]
+            # control address -- as we don't have this yet, just use the flat network
+            control_addr = nova_instance.addresses["control-network"][0], 
+
+            # game address    -- as we don't have this yet, just use the flat network
+            game_addr = nova_instance.addresses["control-network"][0]
+            for key in nova_instance.addresses:
+                if key != "control-network":
+                    game_addr = nova_instance.addresses[key][0];
+            node['addresses']=[ control_addr, game_addr ]
 
             if 'windows' not in enterprise_node['roles']: 
                 print("Skipping password retrieve for non-windows node " + name)
@@ -345,12 +349,13 @@ class OpenstackCloud:
             to_deploy_name = node['name']
             addresses = node['addresses']
 
+            print(f"{to_deploy_name} =  {addresses}")
 
             # The DNS records must contain the GAME addresses (if they exist).
             # Otherwise, any time an end point tries to refer to the node, it will use
             # The control address, and send all the data over the control network.
-            address = addresses[-1]['addr']
-            print(f"Creating DNS zone {to_deploy_name}@{enterprise_url}/{address} ")
+            address = addresses[1]['addr']
+            print(f"Creating DNS zone {to_deploy_name}.{enterprise_url} = {address} ")
             try:
                 node['dns_setup'] = self.designateClient.recordsets.create(zone, to_deploy_name, 'A', [address])
             except designate_client.exceptions.Conflict as _:
