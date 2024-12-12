@@ -134,7 +134,7 @@ class OpenstackCloud:
         return found_image
 
     def find_network_by_name(self, name):
-        ret = self.neutronClient.list_networks()
+        ret = self.neutronClient.list_networks(name=name, project_id=self.sess.auth.project_id)
         networks = ret['networks']
         found_network = None
         for network in networks:
@@ -306,9 +306,10 @@ class OpenstackCloud:
             enterprise_node = next(filter(lambda x: name == x['name'], enterprise['nodes']))
             nova_instance = self.nova_sess.servers.get(id_value)
             print(f"Addresses = {nova_instance.addresses}");
+            network_name = self.cloud_config['external_network']
             node['addresses']=[
-                    nova_instance.addresses[self.network_name][0], # control address -- as we don't have this yet, just use the flat network
-                    nova_instance.addresses[self.network_name][0]  # game address    -- as we don't have this yet, just use the flat network
+                    nova_instance.addresses[network_name][0], # control address -- as we don't have this yet, just use the flat network
+                    nova_instance.addresses[network_name][0]  # game address    -- as we don't have this yet, just use the flat network
                     ]
 
             if 'windows' not in enterprise_node['roles']: 
