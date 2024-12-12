@@ -306,10 +306,10 @@ class OpenstackCloud:
             enterprise_node = next(filter(lambda x: name == x['name'], enterprise['nodes']))
             nova_instance = self.nova_sess.servers.get(id_value)
             # control address -- as we don't have this yet, just use the flat network
-            control_addr = nova_instance.addresses["control-network"][0], 
+            control_addr = nova_instance.addresses["control-network"][0]
 
             # game address    -- as we don't have this yet, just use the flat network
-            game_addr = nova_instance.addresses["control-network"][0]
+            game_addr = control_addr
             for key in nova_instance.addresses:
                 if key != "control-network":
                     game_addr = nova_instance.addresses[key][0];
@@ -348,8 +348,6 @@ class OpenstackCloud:
         for node in ret['nodes']:
             to_deploy_name = node['name']
             addresses = node['addresses']
-
-            print(f"{to_deploy_name} =  {addresses}")
 
             # The DNS records must contain the GAME addresses (if they exist).
             # Otherwise, any time an end point tries to refer to the node, it will use

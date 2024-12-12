@@ -26,6 +26,7 @@ def load_json(filename):
 def extract_creds(enterprise_built, name):
     details = next(filter(lambda x: name == x['name'], enterprise_built['deployed']['nodes']))
     addresses = details['addresses']
+    print(f"{addresses}")
     control_ipv4_addr = addresses[0]['addr']
     game_ipv4_addr = addresses[-1]['addr']
     print("  ipv4 addr (control): " + str(control_ipv4_addr))
