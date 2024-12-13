@@ -164,3 +164,60 @@ You can load the output file into any JSON viewer (recommend something like Fire
 and browse to output for each step.  These outputs can help diagnose connection issues,
 etc.
 
+# Collecting Metrics
+After you run a workflow (and assuming you re-directed output to `workflow.log`), you can compute availability metrics:
+
+```
+./compute_metrics.sh workflow.log
+```
+
+The output should look like:
+
+```
+=== Metrics for ssh linux
+SSH-linux: availability=1.0000
+SSH-linux: num_started=5
+SSH-linux: num_success=4
+SSH-linux: num_err=0
+
+=== Metrics for ssh windows
+SSH-windows: availability=1.0000
+SSH-windows: num_started=2
+SSH-windows: num_success=2
+SSH-windows: num_err=0
+
+=== Metrics for ssh windows and linux
+SSH: availability=1.0000
+SSH: num_started=7
+SSH: num_success=6
+SSH: num_err=0
+
+=== Metrics for Moodle
+Workflow Moodle: availability=.8000
+Workflow Moodle: num_started=5
+Workflow Moodle: num_success=4
+Workflow Moodle: num_err=1
+
+=== Metrics for Moodle by steps
+Workflow Moodle steps: availability=.9642
+Workflow Moodle steps: num_started=28
+Workflow Moodle steps: num_success=27
+Workflow Moodle steps: num_err=0
+```
+
+## Computing additional metrics
+Workflow statistics are emitted as the emulation runs. They are of the form: 
+
+```
+{"timestamp": "2024-12-13T16:38:52.048017", "workflow_name": "Moodle", "status": "start", "message": "Starting step BrowseCourse:CGC", "hostname": "linep1", "pid": 13828, "step_name": "BrowseCourse:CGC"}
+{"timestamp": "2024-12-13T16:38:55.035040", "workflow_name": "Moodle", "status": "start", "message": "Starting step BrowseCourse:MoodlePDF", "hostname": "linep1", "pid": 13828, "step_name": "BrowseCourse:MoodlePDF"}
+{"timestamp": "2024-12-13T16:38:59.042169", "workflow_name": "Moodle", "status": "success", "message": "Step BrowseCourse:MoodlePDF successful", "hostname": "linep1", "pid": 13828, "step_name": "BrowseCourse:MoodlePDF"}
+{"timestamp": "2024-12-13T16:39:05.555751", "workflow_name": "Moodle", "status": "success", "message": "Step BrowseCourse:CGC successful", "hostname": "linep1", "pid": 13828, "step_name": "BrowseCourse:CGC"}
+{"timestamp": "2024-12-13T16:39:05.557954", "workflow_name": "Moodle", "status": "start", "message": "Starting step BrowseCourse:RAMPART", "hostname": "linep1", "pid": 13828, "step_name": "BrowseCourse:RAMPART"}
+{"timestamp": "2024-12-13T16:39:08.408369", "workflow_name": "Moodle", "status": "success", "message": "Step BrowseCourse:RAMPART successful", "hostname": "linep1", "pid": 13828, "step_name": "BrowseCourse:RAMPART"}
+```
+
+There are two kinds of stats collected: (1) workflow-level, (2) workflow but at the step level. The step-level workflows have a `step_name` defined, whereas the workflow level stats do not.
+
+To go beyond the availability metrics reported by `compute_metrics.sh`, highly recommend to write a python program to ingest all the JSON-formatted stats in the log file, e.g., in `workflow.log`
+
