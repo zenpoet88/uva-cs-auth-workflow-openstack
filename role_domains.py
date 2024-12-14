@@ -353,7 +353,7 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
     krb5_cmd= (
             "sudo sed -i 's/default_realm = .*/default_realm = {}/' {} ; "
             "sudo sed -i '/\\[libdefaults\\]/a \  rdns=false ' {} ;  "
-            "while echo {} | sudo kinit administrator@{} 2>&1 | grep 'Cannot find KDC' ; do echo waiting for kinit to succeed; sudo netplan apply; sleep 1; done ; "
+            "count=1 ; while (( count < 30 )) ; do echo {} | sudo kinit administrator@{} 2>&1 |grep 'Cannot find KDC' ; res=${PIPESTATUS[2]} ; if (( res != 0 )) ; then break; fi ; echo waiting for kinit to succeed; sudo netplan apply; sleep 5;  count=$(( count + 1 )) ; done ; "
             "sudo klist "
             ).format(enterprise_name.upper(), krdb_config_path, krdb_config_path, leader_admin_password, fqdn_domain_name.upper())
 
