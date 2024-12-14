@@ -27,7 +27,7 @@ class OpenstackCloud:
 
     def get_session(self):
         options = argparse.ArgumentParser(description='Awesome OpenStack App')
-        self.conn = openstack.connect(options=options)
+        self.conn = openstack.connect(options=options, verify=False)
 
         """Return keystone session"""
 
@@ -47,7 +47,7 @@ class OpenstackCloud:
 
         # Create OpenStack keystoneauth1 session.
         # https://goo.gl/BE7YMt
-        sess = session.Session(auth=auth, verify=os.environ.get('OS_CACERT'))
+        sess = session.Session(auth=auth, verify=False)
 
         return sess
 
@@ -170,7 +170,7 @@ class OpenstackCloud:
             flavor = self.size_to_flavor(size)
             security_group = self.cloud_config['security_group']
             all_groups = self.conn.list_security_groups()
-            project_groups = [x for x in all_groups if ( x.name == security_group  or x.id == security_group ) ]
+            project_groups = [x for x in all_groups if x.name == security_group or x.id == security_group]
             if not len(project_groups) == 1:
                 errstr = "Found 0 or more than 1 security groups called " + security_group + "\n" + str(project_groups)
                 raise RuntimeError(errstr)
@@ -234,7 +234,7 @@ class OpenstackCloud:
             flavor = self.size_to_flavor(size)
             security_group = self.cloud_config['security_group']
             all_groups = self.conn.list_security_groups()
-            project_groups = [x for x in all_groups if x.location.project.id == self.project_id and x.name == security_group]
+            project_groups = [x for x in all_groups if (x.location.project.id == self.project_id and x.name == security_group) or x.id == security_group]
             if not len(project_groups) == 1:
                 errstr = "Found 0 or more than 1 security groups called " + security_group + "\n" + str(all_groups)
                 raise RuntimeError(errstr)
@@ -346,12 +346,11 @@ class OpenstackCloud:
             to_deploy_name = node['name']
             addresses = node['addresses']
 
-
             # The DNS records must contain the GAME addresses (if they exist).
             # Otherwise, any time an end point tries to refer to the node, it will use
             # The control address, and send all the data over the control network.
             address = addresses[-1]['addr']
-            print(f"Creating DNS zone {to_deploy_name}@{enterprise_url}/{address} ")
+            print(f"Creating DNS zone {to_deploy_name}.{enterprise_url} = {address} ")
             try:
                 node['dns_setup'] = self.designateClient.recordsets.create(zone, to_deploy_name, 'A', [address])
             except designate_client.exceptions.Conflict as _:

@@ -7,6 +7,9 @@ import json
 from datetime import datetime
 from openstack_cloud import OpenstackCloud
 
+import urllib3
+urllib3.disable_warnings()
+
 
 def load_configs(cloud_config_filename, enterprise_filename):
     with open(cloud_config_filename) as f:
