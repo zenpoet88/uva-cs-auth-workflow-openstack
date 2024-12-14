@@ -297,7 +297,7 @@ def join_domain_windows(name, leader_admin_password, control_ipv4_addr, game_ipv
             shell = ShellHandler(control_ipv4_addr,domain_name+'\\'+user,leader_admin_password)
             stdout2,stderr2,exit_status2 = shell.execute_powershell('echo "the domain is $env:userdomain" ', verbose=verbose)
             status_received=True
-            print("  Reboot Completed by verifying computer is in the domain");
+            print(f"  Reboot Completed for {name} by verifying computer is in the domain");
         except paramiko.ssh_exception.SSHException:
             time.sleep(5)
             pass
@@ -370,7 +370,7 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
 
     shell.execute_cmd("sudo reboot now" , verbose=verbose)
 
-    print("  Waiting for reboot of linux domain member with ip={}(Expect socket closed by peer messages).".format(control_ipv4_addr))
+    print(f"  Waiting for reboot of {name} linux domain member with ip={control_ipv4_addr}(Expect socket closed by peer messages).")
     time.sleep(5)
     status_received = False
     attempts = 0
@@ -381,17 +381,17 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
         attempts += 1
         try:
             admin_user='administrator@' + fqdn_domain_name
-            print("  Trying to verify reboot ... creds={}:{}:{}".format(control_ipv4_addr,admin_user,leader_admin_password))
+            print("  Trying to verify reboot of {}... creds={}:{}:{}".format(name,control_ipv4_addr,admin_user,leader_admin_password))
             shell = ShellHandler(control_ipv4_addr, admin_user, leader_admin_password)
             stdout2,stderr2,exit_status2 = shell.execute_cmd('sudo netplan apply; realm list', verbose=verbose)
             status_received=True
         except paramiko.ssh_exception.SSHException:
-            print("  Waiting for reboot of linux domain member with ip={}(Expect socket closed by peer messages).".format(control_ipv4_addr))
+            print("  Waiting for reboot of linux domain member, {}, with ip={}(Expect socket closed by peer messages).".format(name, control_ipv4_addr))
 
             time.sleep(5)
             pass
         except paramiko.ssh_exception.NoValidConnectionsError:
-            print("  Waiting for reboot of linux domain member with ip={}(Expect socket closed by peer messages).".format(control_ipv4_addr))
+            print("  Waiting for reboot of linux domain member, {} with ip={}(Expect socket closed by peer messages).".format(name,control_ipv4_addr))
             time.sleep(5)
             pass
 
@@ -412,7 +412,7 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
         else:
             errstr += ". Missing domain information."
         raise RuntimeError(errstr)
-    print("  Reboot Completed by verifying computer is in the domain");
+    print(f"  Reboot Completed for {name} by verifying computer is in the domain");
 
     return {
             "join_domain": {"join-cmd": cmds, "stdout": stdout, "stderr": stderr, "exit_status": exit_status},
