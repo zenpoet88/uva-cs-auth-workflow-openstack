@@ -362,7 +362,7 @@ def join_domain_linux(name, leader_admin_password, control_ipv4_addr, game_ipv4_
         "echo {}| sudo realm join -U administrator {}  -v;"
         ).format(fqdn_domain_name, leader_admin_password, fqdn_domain_name.upper())
 
-    cmds= '(' + set_allow_password + ';' + set_dns_command + ';' + install_packages_cmd + ';' + set_chrony_command + ';' + krb5_cmd + ';' + realm_cmd + ') 2>&1'
+    cmds= '(' + set_allow_password + ';' + set_dns_command + ';' + install_packages_cmd + ';' + set_chrony_command + ';' + krb5_cmd + ';' + realm_cmd + ') 2>&1 | tee /tmp/join_domain.log '
 
 
     shell = ShellHandler(control_ipv4_addr,'ubuntu',None) 

@@ -134,7 +134,7 @@ class OpenstackCloud:
         return found_image
 
     def get_network_id(self, network_name):
-        project = self.conn.get_project(self.project_id)
+        project = self.conn.identity.find_project(self.project_id)
         project_name = project.name
 
         stack_resource_map = {
