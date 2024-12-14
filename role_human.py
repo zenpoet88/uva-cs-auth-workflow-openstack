@@ -26,7 +26,7 @@ def install_human_windows(node,user,control_ipv4_addr,password, cloud_config):
     return {"node": node, "stdout": stdout, "stderr": stderr, "exit_status": exit_status}
 
 def install_human_linux(node,user,control_ipv4_addr,password, cloud_config):
-    print(f"Installing as user {user}")
+    print(f"Installing human plugin support as user {user} on node {node['name']} ")
     shell = ShellHandler(control_ipv4_addr,user,password, verbose=verbose)
     shell.put_file(human_plugin_version, '/tmp/pyhuman.zip')
 
