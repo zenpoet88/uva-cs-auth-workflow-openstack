@@ -149,7 +149,14 @@ class OpenstackCloud:
             if resource.id == network_name
         ]
 
-        return network_id_list[0] if len(network_id_list) > 0 else None
+        result= network_id_list[0] if len(network_id_list) > 0 else None
+        # try to find a network outside the stack list if it might be a public network.
+        if result is None
+            result = self.conn.network.get_network_by_id(network_name)
+        if result is None
+            result = self.conn.network.find_network(network_name)
+
+        return result
 
     def find_network_by_name(self, name):
         ret = self.neutronClient.list_networks()
