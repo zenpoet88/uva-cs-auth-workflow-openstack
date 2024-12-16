@@ -91,6 +91,10 @@ def emulate_login(number, login, user_data, built):
             del_command = None
 
 
+        if is_windows:
+            print("To windows node")
+        else:
+            print("To linux node")
 
         shell = ShellHandler(targ_ip,fq_username,password=password, from_ip=from_ip_str, verbose=verbose)
 
@@ -102,16 +106,18 @@ def emulate_login(number, login, user_data, built):
         stdout,stderr, exit_status = shell.execute_cmd(cmd1)
 
         if is_windows:
-            print("To windows node")
             cmd2=f'echo "{username}\n{password}"'
             stdout2,stderr2, exit_status2 = shell.execute_powershell(cmd2)
         else:
-            print("To linux node")
             passfile=f"/tmp/shib_login.{username}"
             cmd2=f'echo "{username}\n{password}" > {passfile}; xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --extra  passfile {passfile}'
             stdout2,stderr2, exit_status2 = shell.execute_cmd(cmd2, verbose=True)
 
 
+        if is_windows:
+            print(f"ssh successful for windows")
+        else:
+            print(f"ssh successful for linux")
         if not del_command is None:
             os.system(del_command)
     except KeyboardInterrupt:
@@ -119,7 +125,10 @@ def emulate_login(number, login, user_data, built):
         raise
     except Exception as e:
         print("");
-        print(f"FAILED CONNECTION: At {datetime.now()}, Failed connect to user = {username}@{domain}@{targ_ip}, password = {password}")
+        if is_windows:
+            print(f"FAILED CONNECTION windows: At {datetime.now()}, Failed connect to user = {username}@{domain}@{targ_ip}, password = {password}")
+        else:
+            print(f"FAILED CONNECTION linux: At {datetime.now()}, Failed connect to user = {username}@{domain}@{targ_ip}, password = {password}")
         print(f"{e}")
         traceback.print_exception(e)
         pass
