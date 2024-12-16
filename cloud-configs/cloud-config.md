@@ -14,7 +14,9 @@ or prompt the user for things like passwords (less preferred), etc.
  * `external_network` - string.  The openstack network to use to create the deployed nodes.  It is assumed
  that this network can access the internet for deploying packages, etc.  It is also assumed that the DNS
  settings for this network can access the Designate-provided DNS records in openstack.  Further, it is assumed
- that the workflow manager can access this network with direct SSH access.
+ that the workflow manager can access this network with direct SSH access.  If multiple networks of the same name are 
+ available, you can specify an ID instead.
+
 
  * `keypair` - string. The openstack keypair to be installed in the node.  It is assumed that the paramiko ssh client can
  access the private key for this keypair in the standard way.  If the key is not in a place where `ssh` can typically
@@ -30,7 +32,8 @@ or prompt the user for things like passwords (less preferred), etc.
  * `instance_size_map` - object.  This object maps high-level instance size names to openstack flavor names.
 
  * `security-group` - string. The security group to use when creating nodes.  It is recommended that you create a rule
- where all traffic is allowed, but at a minimum, SSH, HTTP, HTTPS, LDAP and Active Directory must be allowed.
+ where all traffic is allowed, but at a minimum, SSH, HTTP, HTTPS, LDAP and Active Directory must be allowed.  If you have
+ multiple security groups with the same name, you can also specify the ID of the security group.
 
 	```
         # Example of super permissive policy
