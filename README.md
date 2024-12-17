@@ -83,6 +83,11 @@ If you want to do "fast" emulation for debugging, you can add the ``--fast-debug
 $ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --fast-debug 2>&1 |tee workflow.log
 ```
 
+If you want to specify a seed for more deterministic emulation results:
+
+```
+$ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --fast-debug --seed 42 2>&1 |tee workflow.log
+```
 
 
 ### Cleanup

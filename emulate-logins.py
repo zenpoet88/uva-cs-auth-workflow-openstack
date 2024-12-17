@@ -2,7 +2,7 @@
 
 
 import traceback
-import time, sys, os, json
+import time, sys, os, json, random
 from shell_handler import ShellHandler
 from datetime import datetime, timezone, timedelta
 
@@ -24,7 +24,7 @@ use_fake_fromip=False
 
 # functions
 
-def emulate_login(number, login, user_data, built):
+def emulate_login(number, login, user_data, built, seed):
 
 
     # print(f"At {datetime.now()}, emulating login: " +  json.dumps(login))
@@ -109,8 +109,10 @@ def emulate_login(number, login, user_data, built):
             cmd2=f'echo "{username}\n{password}"'
             stdout2,stderr2, exit_status2 = shell.execute_powershell(cmd2)
         else:
+            if seed is None:
+                seed = random.randint(0, 10000)
             passfile=f"/tmp/shib_login.{username}"
-            cmd2=f'echo "{username}\n{password}" > {passfile}; xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --extra  passfile {passfile}'
+            cmd2=f'echo "{username}\n{password}" > {passfile}; xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --seed {seed} --extra  passfile {passfile}'
             stdout2,stderr2, exit_status2 = shell.execute_cmd(cmd2, verbose=True)
 
 
@@ -165,7 +167,7 @@ def flatten_logins(logins):
     return flat_logins
 
 
-def schedule_logins(logins_file, setup_output_file, fast_debug = False):
+def schedule_logins(logins_file, setup_output_file, fast_debug = False, seed = None):
     global nowish
     users = logins_file['users']
     flat_logins = flatten_logins(logins_file['logins'])
@@ -186,27 +188,41 @@ def schedule_logins(logins_file, setup_output_file, fast_debug = False):
         job_start = login['login_start']
         job_start = datetime.strptime(job_start, '%Y-%m-%d %H:%M:%S.%f')
         if fast_debug:
-            emulate_login(number= number, login= login, user_data= users, built= setup_output_file['enterprise_built'])
+            emulate_login(number= number, login= login, user_data= users, built= setup_output_file['enterprise_built'], seed = seed)
         else:
-            scheduler.add_job( emulate_login, 'date', run_date=job_start, kwargs={'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built']})
+            scheduler.add_job( emulate_login, 'date', run_date=job_start, kwargs={'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built'], 'seed': seed})
         
 
     return scheduler
 
 
 def main():
-    if len(sys.argv) != 3 and len(sys.argv) != 4:
-        print(f"Usage: {sys.argv[0]} post-deploy-output.json logins.json ( --fast-debug )" )
+    # Check argument count
+    if len(sys.argv) < 3 or len(sys.argv) > 6:
+        print(f"Usage: {sys.argv[0]} post-deploy-output.json logins.json ( --fast-debug ) ( --seed <seed> )")
         sys.exit(1)
 
-    fast_debug = (len(sys.argv) == 4)
+    seed = None
+    fast_debug = False
+
+    # Parse arguments
+    args = sys.argv[1:]
+    if "--fast-debug" in args:
+        fast_debug = True
+    
+    if "--seed" in args:
+        seed_index = args.index("--seed")
+        if seed_index + 1 >= len(args):
+            print("Error: --seed requires a value.")
+            sys.exit(1)
+        seed = args[seed_index + 1]
 
     output={}
     output['start_time']=str(datetime.now())
     setup_output_file = load_json_file(sys.argv[1])
     logins_file = load_json_file(sys.argv[2])
 
-    scheduler = schedule_logins(logins_file, setup_output_file, fast_debug = fast_debug)
+    scheduler = schedule_logins(logins_file, setup_output_file, fast_debug = fast_debug, seed = seed)
 
     scheduler.start()
 
