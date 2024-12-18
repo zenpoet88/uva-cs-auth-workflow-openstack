@@ -2,7 +2,7 @@
 
 
 import traceback
-import time, sys, os, json
+import time, sys, os, json, random, argparse
 from shell_handler import ShellHandler
 from datetime import datetime, timezone, timedelta
 
@@ -24,7 +24,7 @@ use_fake_fromip=False
 
 # functions
 
-def emulate_login(number, login, user_data, built):
+def emulate_login(number, login, user_data, built, seed):
 
 
     # print(f"At {datetime.now()}, emulating login: " +  json.dumps(login))
@@ -110,7 +110,7 @@ def emulate_login(number, login, user_data, built):
             stdout2,stderr2, exit_status2 = shell.execute_powershell(cmd2)
         else:
             passfile=f"/tmp/shib_login.{username}"
-            cmd2=f'echo "{username}\n{password}" > {passfile}; xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --extra  passfile {passfile}'
+            cmd2=f'echo "{username}\n{password}" > {passfile}; xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --seed {seed} --extra  passfile {passfile}'
             stdout2,stderr2, exit_status2 = shell.execute_cmd(cmd2, verbose=True)
 
 
@@ -165,7 +165,7 @@ def flatten_logins(logins):
     return flat_logins
 
 
-def schedule_logins(logins_file, setup_output_file, fast_debug = False):
+def schedule_logins(logins_file, setup_output_file, fast_debug = False, seed = None):
     global nowish
     users = logins_file['users']
     flat_logins = flatten_logins(logins_file['logins'])
@@ -174,9 +174,14 @@ def schedule_logins(logins_file, setup_output_file, fast_debug = False):
     }
     scheduler = BackgroundScheduler(executors=executors)
 
+    # Pick a seed if none specified
+    if seed is None:
+        seed = random.randint(0, 10000)
 
     number = 0
     for login in flat_logins:
+        # Make sure each workflow gets a different (yet deterministic) seed
+        seed += number
         number += 1
         if fast_debug: 
             nowish +=  timedelta(seconds=3)
@@ -186,31 +191,35 @@ def schedule_logins(logins_file, setup_output_file, fast_debug = False):
         job_start = login['login_start']
         job_start = datetime.strptime(job_start, '%Y-%m-%d %H:%M:%S.%f')
         if fast_debug:
-            emulate_login(number= number, login= login, user_data= users, built= setup_output_file['enterprise_built'])
+            emulate_login(number= number, login= login, user_data= users, built= setup_output_file['enterprise_built'], seed = seed)
         else:
-            scheduler.add_job( emulate_login, 'date', run_date=job_start, kwargs={'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built']})
+            scheduler.add_job( emulate_login, 'date', run_date=job_start, kwargs={'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built'], 'seed': seed})
         
 
     return scheduler
 
 
 def main():
-    if len(sys.argv) != 3 and len(sys.argv) != 4:
-        print(f"Usage: {sys.argv[0]} post-deploy-output.json logins.json ( --fast-debug )" )
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Process post-deploy output and logins with optional flags.")
+    parser.add_argument("post_deploy_output", type=str, help="Path to post-deploy-output.json")
+    parser.add_argument("logins", type=str, help="Path to logins.json")
+    parser.add_argument("--fast-debug", action="store_true", help="Enable fast debug mode")
+    parser.add_argument("--seed", type=int, help="Specify a seed value")
 
-    fast_debug = (len(sys.argv) == 4)
+    args = parser.parse_args()
+
+    # Parse and retrieve args
+    setup_output_file = load_json_file(args.post_deploy_output)
+    logins_file = load_json_file(args.logins)
+    fast_debug = args.fast_debug
+    seed = args.seed
 
     output={}
     output['start_time']=str(datetime.now())
-    setup_output_file = load_json_file(sys.argv[1])
-    logins_file = load_json_file(sys.argv[2])
 
-    scheduler = schedule_logins(logins_file, setup_output_file, fast_debug = fast_debug)
+    scheduler = schedule_logins(logins_file, setup_output_file, fast_debug = fast_debug, seed = seed)
 
     scheduler.start()
-
-
 
     try:
         while len(scheduler.get_jobs()) > 0:
