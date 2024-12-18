@@ -2,7 +2,7 @@
 
 
 import traceback
-import time, sys, os, json, random
+import time, sys, os, json, random, argparse
 from shell_handler import ShellHandler
 from datetime import datetime, timezone, timedelta
 
@@ -109,8 +109,6 @@ def emulate_login(number, login, user_data, built, seed):
             cmd2=f'echo "{username}\n{password}"'
             stdout2,stderr2, exit_status2 = shell.execute_powershell(cmd2)
         else:
-            if seed is None:
-                seed = random.randint(0, 10000)
             passfile=f"/tmp/shib_login.{username}"
             cmd2=f'echo "{username}\n{password}" > {passfile}; xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --seed {seed} --extra  passfile {passfile}'
             stdout2,stderr2, exit_status2 = shell.execute_cmd(cmd2, verbose=True)
@@ -176,9 +174,14 @@ def schedule_logins(logins_file, setup_output_file, fast_debug = False, seed = N
     }
     scheduler = BackgroundScheduler(executors=executors)
 
+    # Pick a seed if none specified
+    if seed is None:
+        seed = random.randint(0, 10000)
 
     number = 0
     for login in flat_logins:
+        # Make sure each workflow gets a different (yet deterministic) seed
+        seed += number
         number += 1
         if fast_debug: 
             nowish +=  timedelta(seconds=3)
@@ -197,36 +200,26 @@ def schedule_logins(logins_file, setup_output_file, fast_debug = False, seed = N
 
 
 def main():
-    # Check argument count
-    if len(sys.argv) < 3 or len(sys.argv) > 6:
-        print(f"Usage: {sys.argv[0]} post-deploy-output.json logins.json ( --fast-debug ) ( --seed <seed> )")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Process post-deploy output and logins with optional flags.")
+    parser.add_argument("post_deploy_output", type=str, help="Path to post-deploy-output.json")
+    parser.add_argument("logins", type=str, help="Path to logins.json")
+    parser.add_argument("--fast-debug", action="store_true", help="Enable fast debug mode")
+    parser.add_argument("--seed", type=int, help="Specify a seed value")
 
-    seed = None
-    fast_debug = False
+    args = parser.parse_args()
 
-    # Parse arguments
-    args = sys.argv[1:]
-    if "--fast-debug" in args:
-        fast_debug = True
-    
-    if "--seed" in args:
-        seed_index = args.index("--seed")
-        if seed_index + 1 >= len(args):
-            print("Error: --seed requires a value.")
-            sys.exit(1)
-        seed = args[seed_index + 1]
+    # Parse and retrieve args
+    setup_output_file = load_json_file(args.post_deploy_output)
+    logins_file = load_json_file(args.logins)
+    fast_debug = args.fast_debug
+    seed = args.seed
 
     output={}
     output['start_time']=str(datetime.now())
-    setup_output_file = load_json_file(sys.argv[1])
-    logins_file = load_json_file(sys.argv[2])
 
     scheduler = schedule_logins(logins_file, setup_output_file, fast_debug = fast_debug, seed = seed)
 
     scheduler.start()
-
-
 
     try:
         while len(scheduler.get_jobs()) > 0:
