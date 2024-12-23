@@ -67,7 +67,7 @@ class OpenstackCloud:
     def find_zone(self, enterprise_url):
         zones = self.designateClient.zones.list()
         for zone in zones:
-            if zone['name'] == (enterprise_url+'.'):
+            if zone['name'] == (enterprise_url + '.'):
                 return zone
         return None
 
@@ -149,7 +149,7 @@ class OpenstackCloud:
             if resource.id == network_name
         ]
 
-        result= network_id_list[0] if len(network_id_list) > 0 else None
+        result = network_id_list[0] if len(network_id_list) > 0 else None
         # try to find a network outside the stack list if it might be a public network.
         if result is None:
             result = self.conn.get_network_by_id(network_name)
@@ -163,7 +163,7 @@ class OpenstackCloud:
         networks = ret['networks']
         found_network = None
         for network in networks:
-            found = network['id'] == name or network['name'] == name 
+            found = network['id'] == name or network['name'] == name
             if found and found_network is None:
                 found_network = network
             elif found and found_network is not None:
@@ -259,7 +259,8 @@ class OpenstackCloud:
             flavor = self.size_to_flavor(size)
             security_group = self.cloud_config['security_group']
             all_groups = self.conn.list_security_groups()
-            project_groups = [x for x in all_groups if (x.location.project.id == self.project_id and x.name == security_group) or x.id == security_group]
+            project_groups = [x for x in all_groups if (
+                x.location.project.id == self.project_id and x.name == security_group) or x.id == security_group]
             if not len(project_groups) == 1:
                 errstr = "Found 0 or more than 1 security groups called " + security_group + "\n" + str(all_groups)
                 raise RuntimeError(errstr)
@@ -306,7 +307,7 @@ class OpenstackCloud:
                 waiting = False
                 for node in ret['nodes']:
                     id_value = node['id']
-                    if not node['is_ready']: 
+                    if not node['is_ready']:
                         nova_instance = self.nova_sess.servers.get(id_value)
                         node['nova_status'] = nova_instance.status
                         if nova_instance.status == 'ACTIVE':
@@ -320,7 +321,7 @@ class OpenstackCloud:
                                 "Assuming error has occured.  Exiting...."
                             )
                             raise RuntimeError(errstr)
-            except Exception as _:
+            except Exception as _:   # noqa: F841
                 pass
 
         print('All nodes are ready')
@@ -348,7 +349,7 @@ class OpenstackCloud:
 
             node['addresses'] = address_list
 
-            if 'windows' not in enterprise_node['roles']: 
+            if 'windows' not in enterprise_node['roles']:
                 print("Skipping password retrieve for non-windows node " + name)
                 continue
             while True:
@@ -365,7 +366,8 @@ class OpenstackCloud:
     def create_zones(self, ret):
         enterprise_url = self.cloud_config['enterprise_url']
         print("Creating DNS zone " + enterprise_url)
-        ret['create_zones'] = self.designateClient.zones.create(enterprise_url+".", email="root@"+enterprise_url, ttl=60)
+        ret['create_zones'] = self.designateClient.zones.create(
+            enterprise_url + ".", email="root@" + enterprise_url, ttl=60)
         return ret
 
     def query_zones(self, ret):
@@ -389,7 +391,7 @@ class OpenstackCloud:
             print(f"Creating DNS zone {to_deploy_name}.{enterprise_url} = {address} ")
             try:
                 node['dns_setup'] = self.designateClient.recordsets.create(zone, to_deploy_name, 'A', [address])
-            except designate_client.exceptions.Conflict as _:
+            except designate_client.exceptions.Conflict as _:  # noqa: F841
                 print(f"WARNING:  already a DNS record for {to_deploy_name}")
         return ret
 

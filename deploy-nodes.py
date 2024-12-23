@@ -85,7 +85,7 @@ def main():
 
         print("Deploying nodes.")
         enterprise_built = query_enterprise(cloud_config, enterprise_config) if args.query_only \
-                else deploy_enterprise(cloud_config, enterprise_config)
+            else deploy_enterprise(cloud_config, enterprise_config)
 
         print("Deploying nodes, completed.")
 
@@ -96,7 +96,7 @@ def main():
         json_output["deploy_end_time"] = str(datetime.now())
 
         print("Enterprise built.  Writing output to deploy-output.json.")
-    except Exception as _:
+    except Exception as _:   # noqa: F841
         traceback.print_exc()
         print("Exception occured while setting up enterprise.  Dumping results to deploy-output.json anyhow.")
 
