@@ -45,6 +45,8 @@ def register_windows(enterprise, enterprise_built, only):
     ret = {}
     access_list = []
     windows_nodes = list(filter(lambda x: 'windows' in x['roles'], enterprise['nodes']))
+    windows_nodes = [x for x in windows_nodes if only is None or x['name'] in only]
+    print(only)
     for node in windows_nodes:
         name = node['name']
         print("  Registering windows on " + name)
@@ -70,6 +72,7 @@ def join_domains(cloud_config, enterprise, enterprise_built, only):
     ret = {}
     access_list = []
     nodes = list(filter(lambda x: 'endpoint' in x['roles'], enterprise['nodes']))
+    nodes = [x for x in nodes if only is None or x['name'] in only]
     leader_details = enterprise_built['setup']['setup_domains']['domain_leaders']
     for node in nodes:
         name = node['name']
@@ -107,6 +110,7 @@ def deploy_human(cloud_config, enterprise, enterprise_built, only):
     ret = {}
     access_list = []
     nodes = enterprise['nodes']
+    nodes = [x for x in nodes if only is None or x['name'] in only]
     results = []
     for node in nodes:
         name = node['name']
@@ -137,6 +141,7 @@ def setup_moodle_idps(cloud_config, enterprise, enterprise_built, only):
     ret = {}
     access_list = []
     idps = list(filter(lambda x: 'idp' in x['roles'], enterprise['nodes']))
+    idps = [x for x in idps if only is None or x['name'] in only]
     leader_details = enterprise_built['setup']['setup_domains']['domain_leaders']
     for node in idps:
         name = node['name']
@@ -174,6 +179,7 @@ def setup_moodle_sps(cloud_config, enterprise, enterprise_built, only):
     ret = {}
     access_list = []
     sps = list(filter(lambda x: 'sp' in x['roles'], enterprise['nodes']))
+    sps = [x for x in sps if only is None or x['name'] in only]
     leader_details = enterprise_built['setup']['setup_domains']['domain_leaders']
     for node in sps:
         name = node['name']
@@ -211,6 +217,7 @@ def setup_moodle_idps_part2(cloud_config, enterprise, enterprise_built, only):
     ret = {}
     access_list = []
     idps = list(filter(lambda x: 'idp' in x['roles'], enterprise['nodes']))
+    idps = [x for x in idps if only is None or x['name'] in only]
     leader_details = enterprise_built['setup']['setup_domains']['domain_leaders']
     for node in idps:
         name = node['name']
@@ -244,17 +251,6 @@ def setup_moodle_idps_part2(cloud_config, enterprise, enterprise_built, only):
     return ret
 
 
-def setup_enterprise(cloud_config, to_build, built, only):
-    built['setup'] = {}
-    built['setup']['windows_register'] = register_windows(to_build, built, only)
-    built['setup']['setup_domains'] = deploy_domain_controllers(cloud_config, to_build, built, only)
-    built['setup']['join_domains'] = join_domains(cloud_config, to_build, built, only)
-    built['setup']['deploy_human'] = deploy_human(cloud_config, to_build, built, only)
-    built['setup']['setup_moodle_idps'] = setup_moodle_idps(cloud_config, to_build, built, only)
-    built['setup']['setup_moodle_sps'] = setup_moodle_sps(cloud_config, to_build, built, only)
-    built['setup']['setup_moodle_idps_part2'] = setup_moodle_idps_part2(cloud_config, to_build, built, only)
-
-
 def deploy_domain_controllers(cloud_config, enterprise, enterprise_built, only):
     ret = {}
     leaders = list(filter(lambda x: 'domain_controller_leader' in x['roles'], enterprise['nodes']))
@@ -266,7 +262,10 @@ def deploy_domain_controllers(cloud_config, enterprise, enterprise_built, only):
         control_ipv4_addr, game_ipv4_addr, password = extract_creds(enterprise_built, name)
         # access_list.append({"name": name})
         # access_list.append({"name": name, "addr": ipv4_addr})
-        results = role_domains.deploy_forest(cloud_config, name, control_ipv4_addr, game_ipv4_addr, password, domain)
+        if only is None or name in only:
+            results = role_domains.deploy_forest(cloud_config, name, control_ipv4_addr, game_ipv4_addr, password, domain)
+        else:
+            results = {"msg": "skipping setup of domain controller leader as requested"}
         leader_details[domain] = {
             "name": str(name),
             "control_addr": [control_ipv4_addr],
@@ -281,9 +280,13 @@ def deploy_domain_controllers(cloud_config, enterprise, enterprise_built, only):
         name = follower['name']
         print("Setting up domain controller on " + name + ' for domain ' + domain)
         control_ipv4_addr, game_ipv4_addr, password = extract_creds(enterprise_built, name)
-        results = role_domains.add_domain_controller(
-            cloud_config, leader_details[domain], name, control_ipv4_addr, game_ipv4_addr, password, domain
-        )
+        if only is None or name in only:
+            results = role_domains.add_domain_controller(
+                cloud_config, leader_details[domain], name, control_ipv4_addr, game_ipv4_addr, password, domain
+            )
+        else:
+            results = {"msg": "skipping setup of domain controller follower as requested."}
+
         leader_details[domain]['control_addr'].append(control_ipv4_addr)
         leader_details[domain]['game_addr'].append(game_ipv4_addr)
         ret["additional_dc_setup_" + name] = results
@@ -292,11 +295,22 @@ def deploy_domain_controllers(cloud_config, enterprise, enterprise_built, only):
     return ret
 
 
+def setup_enterprise(cloud_config, to_build, built, only):
+    built['setup'] = {}
+    built['setup']['windows_register'] = register_windows(to_build, built, only)
+    built['setup']['setup_domains'] = deploy_domain_controllers(cloud_config, to_build, built, only)
+    built['setup']['join_domains'] = join_domains(cloud_config, to_build, built, only)
+    built['setup']['deploy_human'] = deploy_human(cloud_config, to_build, built, only)
+    built['setup']['setup_moodle_idps'] = setup_moodle_idps(cloud_config, to_build, built, only)
+    built['setup']['setup_moodle_sps'] = setup_moodle_sps(cloud_config, to_build, built, only)
+    built['setup']['setup_moodle_idps_part2'] = setup_moodle_idps_part2(cloud_config, to_build, built, only)
+
+
 def main():
 
     # Create an ArgumentParser object
     parser = argparse.ArgumentParser(description="A script to configure deployed machines.")
-    parser.add_argument("deploy-output", help="Path to the deploy-output.py file")
+    parser.add_argument("deploy_output", help="Path to the deploy-output.py file")
     parser.add_argument("-o", "--only", action="append",
                         help="Specify that not all nodes should be configured, only specified node (can be repeated).")
     args = parser.parse_args()
