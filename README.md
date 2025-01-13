@@ -24,8 +24,8 @@ Shibboleth and Moodle will not work without the proper DNS resolution.
 Then, you can deploy and configure an enterprise:
 
 ```
-$ ./deploy-nodes.py -c cloud-config.json -e enterprise-tiny.json
-$ ./post-deploy-nodes.py deploy-output.json
+$ ./deploy-nodes.py -c cloud-configs/cloud-config.json -e enterprise-configs/enterprise-tiny.json
+$ ./post-deploy.py deploy-output.json
 ```
 
 This deploys the infrastructure, setups up domain controllers, etc.  Output is written to `deploy-output.json` and `post-deploy-output.json`.  
@@ -178,7 +178,7 @@ To run deployment, run
 
 as above.
 
-Once `deploy-node.py` finishe successfully, it should render output similar to that below
+Once `deploy-node.py` finishes successfully, it should render output similar to that below
 
 ```commandline
 Setting up nodes.
