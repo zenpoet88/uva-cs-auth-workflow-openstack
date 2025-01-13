@@ -25,7 +25,7 @@ Then, you can deploy and configure an enterprise:
 
 ```
 $ ./deploy-nodes.py -c cloud-config.json -e enterprise-tiny.json
-$ ./post-deploy-nodes.py deploy-output.json
+$ ./post-deploy.py deploy-output.json
 ```
 
 This deploys the infrastructure, setups up domain controllers, etc.  Output is written to `deploy-output.json` and `post-deploy-output.json`.  

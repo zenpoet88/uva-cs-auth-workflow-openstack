@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-
+import threading
 import traceback
 import time
 import sys
@@ -18,7 +18,6 @@ from faker import Faker
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor
 
-
 # global variables
 login_results = []
 fake = Faker()
@@ -26,11 +25,26 @@ nowish = datetime.now()
 scheduler = BackgroundScheduler()
 verbose = False
 use_fake_fromip = False
+emulation_start_time = datetime.now().replace(microsecond=0)
+
+# Clip ssh commands to a maximum value
+# Set to None if you do not want this behavior
+#MAX_LOGIN_DURATION = 120
 
 # functions
 
+file_lock = threading.Lock()
 
-def emulate_login(number, login, user_data, built, seed):
+# ndjson format
+def record_log(logfile, new_record):
+    json_line = json.dumps(new_record)
+         
+    with file_lock:  # Acquire the lock
+        with open(logfile, 'a') as file:
+            file.write(json_line + '\n')
+            file.flush()
+
+def emulate_login(number, login, user_data, built, seed, logfile):
 
     # print(f"At {datetime.now()}, emulating login: " +  json.dumps(login))
     login_from = login['from']
@@ -104,6 +118,7 @@ def emulate_login(number, login, user_data, built, seed):
         # works on linux and windows
         # cmd ='python -c "import json;  print(json.dumps(json.load(open(\'action.json\',\'r\'))))"'
 
+        print(f"DEBUG: logging to {logfile}")
         cmd1 = 'echo ' + json.dumps(login) + " > action.json  "
         stdout, stderr, exit_status = shell.execute_cmd(cmd1)
 
@@ -111,8 +126,12 @@ def emulate_login(number, login, user_data, built, seed):
             cmd2 = f'echo "{username}\n{password}"'
             stdout2, stderr2, exit_status2 = shell.execute_powershell(cmd2)
         else:
+            # do this in the simulation step to be clean, make it like random(30, 120)
+#            if MAX_LOGIN_DURATION is not None:
+#                duration = min(duration, MAX_LOGIN_DURATION)
+#            print(f"DEBUG: max = {MAX_LOGIN_DURATION} duration = {duration}")
             passfile = f"/tmp/shib_login.{username}"
-            cmd2 = f'echo "{username}\n{password}" > {passfile}; xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --seed {seed} --extra  passfile {passfile}'
+            cmd2 = f'echo "{username}\n{password}" > {passfile}; stdbuf -i0 -oL -eL xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 250 --stopafter {duration} --seed {seed} --extra  passfile {passfile}'
             stdout2, stderr2, exit_status2 = shell.execute_cmd(cmd2, verbose=True)
 
         if is_windows:
@@ -136,8 +155,16 @@ def emulate_login(number, login, user_data, built, seed):
         traceback.print_exception(e)
         pass
 
-    login_results.append({"cmd": cmd, "stdout": [stdout, stdout2], "stderr": [
-                         stderr, stderr2], "login": login, "exit_status": [exit_status, exit_status2]})
+    new_output = {"cmd": cmd, "stdout": [stdout, stdout2], "stderr": [
+                         stderr, stderr2], "login": login, "exit_status": [exit_status, exit_status2]}
+
+    # dump to log as ssh sessions complete
+    if logfile:
+        record_log(logfile, new_output)
+
+    # stash away output as before
+    login_results.append(new_output)
+
     # explicitly clean up the shell so we don't somehow save anything from it
     stdout = ""
     stderr = ""
@@ -171,7 +198,7 @@ def flatten_logins(logins):
     return flat_logins
 
 
-def schedule_logins(logins_file, setup_output_file, fast_debug=False, seed=None):
+def schedule_logins(logins_file, setup_output_file, logfile=None, fast_debug=False, seed=None):
     global nowish
     users = logins_file['users']
     flat_logins = flatten_logins(logins_file['logins'])
@@ -182,8 +209,12 @@ def schedule_logins(logins_file, setup_output_file, fast_debug=False, seed=None)
 
     # Pick a seed if none specified
     if seed is None:
-        seed = random.randint(0, 10000)
-
+        if logins_file['seed']:
+            seed = logins_file['seed']
+        else:
+            seed = random.randint(0, 10000)
+    print(f"Starting seed: {seed}")
+   
     number = 0
     for login in flat_logins:
         # Make sure each workflow gets a different (yet deterministic) seed
@@ -198,10 +229,10 @@ def schedule_logins(logins_file, setup_output_file, fast_debug=False, seed=None)
         job_start = datetime.strptime(job_start, '%Y-%m-%d %H:%M:%S.%f')
         if fast_debug:
             emulate_login(number=number, login=login, user_data=users,
-                          built=setup_output_file['enterprise_built'], seed=seed)
+                    built=setup_output_file['enterprise_built'], seed=seed, logfile=logfile)
         else:
             scheduler.add_job(emulate_login, 'date', run_date=job_start, kwargs={
-                              'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built'], 'seed': seed})
+                'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built'], 'seed': seed, 'logfile': logfile})
 
     return scheduler
 
@@ -212,6 +243,7 @@ def main():
     parser.add_argument("logins", type=str, help="Path to logins.json")
     parser.add_argument("--fast-debug", action="store_true", help="Enable fast debug mode")
     parser.add_argument("--seed", type=int, help="Specify a seed value")
+    parser.add_argument("--logfile", type=str, help="Log output file", default=f"workflow.{emulation_start_time.isoformat()}.log")
 
     args = parser.parse_args()
 
@@ -220,11 +252,12 @@ def main():
     logins_file = load_json_file(args.logins)
     fast_debug = args.fast_debug
     seed = args.seed
+    logfile = args.logfile
 
     output = {}
-    output['start_time'] = str(datetime.now())
+    output['start_time'] = emulation_start_time.isoformat()
 
-    scheduler = schedule_logins(logins_file, setup_output_file, fast_debug=fast_debug, seed=seed)
+    scheduler = schedule_logins(logins_file, setup_output_file, logfile=logfile, fast_debug=fast_debug, seed=seed)
 
     scheduler.start()
 
