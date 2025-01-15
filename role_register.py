@@ -23,13 +23,12 @@ def do_rename_adapter(control_ip:str, user:str, password:str, rename_ip:str, new
 
     return {"stdout": stdout, "stderr": stderr, "exit_status": exit_status}
 
+
 def register_windows_instance(obj):
     game_ipv4_addr=obj['game_addr']
     control_ipv4_addr=obj['control_addr']
     password=obj['password']
     user='Administrator'
-
-
 
     game_rename = do_rename_adapter(control_ipv4_addr, user, password, game_ipv4_addr, "game-adapter")
     control_rename=""
