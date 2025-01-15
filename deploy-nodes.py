@@ -95,7 +95,7 @@ def main():
         json_output["deploy_end_time"] = str(datetime.now())
 
         print("Enterprise built.  Writing output to deploy-output.json.")
-    except Exception as _:
+    except Exception as _:   # noqa: F841
         traceback.print_exc()
         print("Exception occured while setting up enterprise.  Dumping results to deploy-output.json anyhow.")
 

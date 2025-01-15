@@ -169,7 +169,7 @@ class OpenstackCloud:
         networks = ret['networks']
         found_network = None
         for network in networks:
-            found = network['id'] == name or network['name'] == name 
+            found = network['id'] == name or network['name'] == name
             if found and found_network is None:
                 found_network = network
             elif found and found_network is not None:
@@ -315,7 +315,7 @@ class OpenstackCloud:
                 waiting = False
                 for node in ret['nodes']:
                     id_value = node['id']
-                    if not node['is_ready']: 
+                    if not node['is_ready']:
                         nova_instance = self.nova_sess.servers.get(id_value)
                         node['nova_status'] = nova_instance.status
                         if nova_instance.status == 'ACTIVE':
@@ -329,7 +329,7 @@ class OpenstackCloud:
                                 "Assuming error has occurred.  Exiting...."
                             )
                             raise RuntimeError(errstr)
-            except Exception as _:
+            except Exception as _:   # noqa: F841
                 pass
 
         print('All nodes are ready')
@@ -357,7 +357,7 @@ class OpenstackCloud:
 
             node['addresses'] = address_list
 
-            if 'windows' not in enterprise_node['roles']: 
+            if 'windows' not in enterprise_node['roles']:
                 print("Skipping password retrieve for non-windows node " + name)
                 continue
             while True:
@@ -396,7 +396,7 @@ class OpenstackCloud:
             print(f"Creating DNS zone {to_deploy_name}.{self.enterprise_url} = {address} ")
             try:
                 node['dns_setup'] = self.designateClient.recordsets.create(zone, to_deploy_name, 'A', [address])
-            except designate_client.exceptions.Conflict as _:
+            except designate_client.exceptions.Conflict as _:  # noqa: F841
                 print(f"WARNING:  already a DNS record for {to_deploy_name}")
         return ret
 
