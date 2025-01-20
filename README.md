@@ -178,7 +178,7 @@ To run deployment, run
 
 as above.
 
-Once `deploy-node.py` finishe successfully, it should render output similar to that below
+Once `deploy-node.py` finishes successfully, it should render output similar to that below
 
 ```commandline
 Setting up nodes.
