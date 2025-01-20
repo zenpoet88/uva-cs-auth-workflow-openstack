@@ -24,7 +24,7 @@ Shibboleth and Moodle will not work without the proper DNS resolution.
 Then, you can deploy and configure an enterprise:
 
 ```
-$ ./deploy-nodes.py -c cloud-config.json -e enterprise-tiny.json
+$ ./deploy-nodes.py -c cloud-configs/cloud-config.json -e enterprise-configs/enterprise-tiny.json
 $ ./post-deploy.py deploy-output.json
 ```
 
