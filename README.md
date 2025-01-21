@@ -24,8 +24,8 @@ Shibboleth and Moodle will not work without the proper DNS resolution.
 Then, you can deploy and configure an enterprise:
 
 ```
-$ ./deploy-nodes.py -c cloud-config.json -e enterprise-tiny.json
-$ ./post-deploy-nodes.py deploy-output.json
+$ ./deploy-nodes.py -c cloud-configs/cloud-config.json -e enterprise-configs/enterprise-tiny.json
+$ ./post-deploy.py deploy-output.json
 ```
 
 This deploys the infrastructure, setups up domain controllers, etc.  Output is written to `deploy-output.json` and `post-deploy-output.json`.  
@@ -80,7 +80,7 @@ $ ./emulate-logins.py  post-deploy-output.json logins.json
 If you want to do "fast" emulation for debugging, you can add the ``--fast-debug`` option.  You may also want to tell python not to buffer the output and redirect all output to a file:
 
 ```
-$ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --fast-debug 2>&1 |tee workflow.log
+$ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --fast-debug 2>&1 | stdbuf -o0 -e0 tee workflow.log
 ```
 
 If you want to specify a seed for more deterministic emulation results:
@@ -88,6 +88,7 @@ If you want to specify a seed for more deterministic emulation results:
 ```
 $ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --fast-debug --seed 42 2>&1 |tee workflow.log
 ```
+
 
 
 ### Cleanup
@@ -178,7 +179,7 @@ To run deployment, run
 
 as above.
 
-Once `deploy-node.py` finishe successfully, it should render output similar to that below
+Once `deploy-node.py` finishes successfully, it should render output similar to that below
 
 ```commandline
 Setting up nodes.

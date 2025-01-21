@@ -39,7 +39,7 @@ class ShellHandler:
 
         if verbose or self.verbose:
             print("Final cmd to execute:" + cmd)
-        stdin, stdout, stderr = self.ssh.exec_command(cmd, bufsize=4096)
+        stdin, stdout, stderr = self.ssh.exec_command(cmd, bufsize=0)
         stdout_lines = []
         stderr_lines = []
         while not stdout.channel.exit_status_ready():
@@ -53,6 +53,20 @@ class ShellHandler:
                     print(line)
                 for line in stderr_newlines:
                     print(line)
+
+#            # Stream stdout
+#            if stdout.channel.recv_ready():
+#                for line in iter(lambda: stdout.readline(), ""):
+#                    stdout_lines.append(line)
+#                    if verbose or self.verbose:
+#                        print(line, end='')  # Print each line as it arrives
+#
+#            # Stream stderr -- is this correct?
+#            if stderr.channel.recv_ready():
+#                for err_line in iter(lambda: stderr.readline(), ""):
+#                    stderr_lines.append(err_line)
+#                    if verbose or self.verbose:
+#                        print(err_line, end='')
 
         exit_status = stdout.channel.recv_exit_status()
         stdout_newlines = stdout.readlines()  # [ line for line in stdout.readlines() if line != [] ]
