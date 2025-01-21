@@ -43,22 +43,43 @@ class ShellHandler:
         stdout_lines = []
         stderr_lines = []
         while not stdout.channel.exit_status_ready():
+            # print('next iter')
+            stdout_newlines = stdout.readlines()
+            stdout_lines += stdout_newlines
+            stderr_newlines = stderr.readlines()
+            stderr_lines += stderr_newlines
+            if verbose or self.verbose:
+                for line in stdout_newlines:
+                    print(line)
+                for line in stderr_newlines:
+                    print(line)
 
-            # Stream stdout
-            if stdout.channel.recv_ready():
-                for line in iter(lambda: stdout.readline(), ""):
-                    stdout_lines.append(line)
-                    if verbose or self.verbose:
-                        print(line, end='')  # Print each line as it arrives
-
-            # Stream stderr -- is this correct?
-            if stderr.channel.recv_ready():
-                for err_line in iter(lambda: stderr.readline(), ""):
-                    stderr_lines.append(err_line)
-                    if verbose or self.verbose:
-                        print(err_line, end='')
+#            # Stream stdout
+#            if stdout.channel.recv_ready():
+#                for line in iter(lambda: stdout.readline(), ""):
+#                    stdout_lines.append(line)
+#                    if verbose or self.verbose:
+#                        print(line, end='')  # Print each line as it arrives
+#
+#            # Stream stderr -- is this correct?
+#            if stderr.channel.recv_ready():
+#                for err_line in iter(lambda: stderr.readline(), ""):
+#                    stderr_lines.append(err_line)
+#                    if verbose or self.verbose:
+#                        print(err_line, end='')
 
         exit_status = stdout.channel.recv_exit_status()
+        stdout_newlines = stdout.readlines()  # [ line for line in stdout.readlines() if line != [] ]
+        stdout_lines += stdout_newlines
+        stderr_newlines = stderr.readlines()  # [ line for line in stderr.readlines() if line != [] ]
+        stderr_lines += stderr_newlines
+        # print('stdout lines = ' + str(len(stdout_lines)))
+        # print('stderr lines = ' + str(len(stderr_lines)))
+        if verbose or self.verbose:
+            for line in stdout_newlines:
+                print(line)
+            for line in stderr_newlines:
+                print(line)
         return stdout_lines, stderr_lines, exit_status
 
     def execute_powershell(self, cmd, verbose=False, exit=False):

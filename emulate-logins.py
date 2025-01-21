@@ -27,10 +27,6 @@ verbose = False
 use_fake_fromip = False
 emulation_start_time = datetime.now().replace(microsecond=0)
 
-# Clip ssh commands to a maximum value
-# Set to None if you do not want this behavior
-#MAX_LOGIN_DURATION = 120
-
 # functions
 
 file_lock = threading.Lock()
@@ -126,12 +122,8 @@ def emulate_login(number, login, user_data, built, seed, logfile):
             cmd2 = f'echo "{username}\n{password}"'
             stdout2, stderr2, exit_status2 = shell.execute_powershell(cmd2)
         else:
-            # do this in the simulation step to be clean, make it like random(30, 120)
-#            if MAX_LOGIN_DURATION is not None:
-#                duration = min(duration, MAX_LOGIN_DURATION)
-#            print(f"DEBUG: max = {MAX_LOGIN_DURATION} duration = {duration}")
             passfile = f"/tmp/shib_login.{username}"
-            cmd2 = f'echo "{username}\n{password}" > {passfile}; stdbuf -i0 -oL -eL xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 250 --stopafter {duration} --seed {seed} --extra  passfile {passfile}'
+            cmd2 = f'echo "{username}\n{password}" > {passfile}; stdbuf -i0 -oL -eL xvfb-run -a "/opt/pyhuman/bin/python" -u "/opt/pyhuman/human.py" --clustersize 5 --taskinterval 10 --taskgroupinterval 500 --stopafter {duration} --seed {seed} --extra  passfile {passfile}'
             stdout2, stderr2, exit_status2 = shell.execute_cmd(cmd2, verbose=True)
 
         if is_windows:
