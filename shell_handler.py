@@ -39,7 +39,7 @@ class ShellHandler:
 
         if verbose or self.verbose:
             print("Final cmd to execute:" + cmd)
-        stdin, stdout, stderr = self.ssh.exec_command(cmd, bufsize=0, get_pty=True)
+        stdin, stdout, stderr = self.ssh.exec_command(cmd, bufsize=0)
         stdout_lines = []
         stderr_lines = []
         while not stdout.channel.exit_status_ready():
