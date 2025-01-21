@@ -80,7 +80,7 @@ $ ./emulate-logins.py  post-deploy-output.json logins.json
 If you want to do "fast" emulation for debugging, you can add the ``--fast-debug`` option.  You may also want to tell python not to buffer the output and redirect all output to a file:
 
 ```
-$ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --fast-debug 2>&1 | stdbuf -o0 tee workflow.log
+$ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --fast-debug 2>&1 | stdbuf -o0 -e0 tee workflow.log
 ```
 
 If you want to specify a seed for more deterministic emulation results:
