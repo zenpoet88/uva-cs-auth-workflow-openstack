@@ -116,7 +116,6 @@ def emulate_login(number, login, user_data, built, seed, logfile):
         # works on linux and windows
         # cmd ='python -c "import json;  print(json.dumps(json.load(open(\'action.json\',\'r\'))))"'
 
-        # print(f"DEBUG: logging to {logfile}")
         cmd1 = 'echo ' + json.dumps(login) + " > action.json  "
         stdout, stderr, exit_status = shell.execute_cmd(cmd1)
 
@@ -183,13 +182,13 @@ def load_json_file(name: str):
 
 def get_earliest_login(logins):
     days = logins['days']
-    oldest = datetime.now()
+    earliest = datetime.now()
     for day in days:
         for user in days[day]:
            login_start = datetime.strptime(days[day][user][0]['login_start'], timestamp_format)
-           if oldest > login_start:
-               oldest = login_start
-    return oldest
+           if earliest > login_start:
+               earliest = login_start
+    return earliest
 
 def flatten_logins(logins, rebase_time=False):
 
