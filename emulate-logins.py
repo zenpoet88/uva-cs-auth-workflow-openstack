@@ -27,6 +27,8 @@ verbose = False
 use_fake_fromip = False
 emulation_start_time = datetime.now().replace(microsecond=0)
 
+timestamp_format = '%Y-%m-%d %H:%M:%S.%f'
+
 # functions
 
 file_lock = threading.Lock()
@@ -114,7 +116,7 @@ def emulate_login(number, login, user_data, built, seed, logfile):
         # works on linux and windows
         # cmd ='python -c "import json;  print(json.dumps(json.load(open(\'action.json\',\'r\'))))"'
 
-        print(f"DEBUG: logging to {logfile}")
+        # print(f"DEBUG: logging to {logfile}")
         cmd1 = 'echo ' + json.dumps(login) + " > action.json  "
         stdout, stderr, exit_status = shell.execute_cmd(cmd1)
 
@@ -179,21 +181,46 @@ def load_json_file(name: str):
     return ret
 
 
-def flatten_logins(logins):
+def get_earliest_login(logins):
+    days = logins['days']
+    oldest = datetime.now()
+    for day in days:
+        for user in days[day]:
+           login_start = datetime.strptime(days[day][user][0]['login_start'], timestamp_format)
+           if oldest > login_start:
+               oldest = login_start
+    return oldest
+
+def flatten_logins(logins, rebase_time=False):
 
     flat_logins = []
     days = logins['days']
 
+    # compute the time delta to add to every login_start and login_end timestamps
+    if rebase_time:
+        now = datetime.now()
+        earliest_login = get_earliest_login(logins)
+        rebase_delta = now - earliest_login + timedelta(seconds=45)
+
     for day in days:
         for user in days[day]:
+            if rebase_time:
+                for index in days[day][user]:
+                    login_start = datetime.strptime(index['login_start'], timestamp_format)
+                    login_end = datetime.strptime(index['login_end'], timestamp_format)
+                    rebased_login_start = login_start + rebase_delta
+                    rebased_login_end = login_end + rebase_delta
+                    index['login_start'] = str(rebased_login_start)
+                    index['login_end'] = str(rebased_login_end)
+            
             flat_logins += days[day][user]
     return flat_logins
 
-
-def schedule_logins(logins_file, setup_output_file, logfile=None, fast_debug=False, seed=None):
+def schedule_logins(logins_file, setup_output_file, logfile=None, fast_debug=False, seed=None, rebase_time=False):
     global nowish
     users = logins_file['users']
-    flat_logins = flatten_logins(logins_file['logins'])
+    flat_logins = flatten_logins(logins_file['logins'], rebase_time)
+
     executors = {
         'default': ThreadPoolExecutor(2000)
     }
@@ -205,7 +232,8 @@ def schedule_logins(logins_file, setup_output_file, logfile=None, fast_debug=Fal
             seed = logins_file['seed']
         else:
             seed = random.randint(0, 10000)
-    print(f"Starting seed: {seed}")
+
+    print(f"At {datetime.now()} - starting seed: {seed}")
    
     number = 0
     for login in flat_logins:
@@ -226,6 +254,7 @@ def schedule_logins(logins_file, setup_output_file, logfile=None, fast_debug=Fal
             scheduler.add_job(emulate_login, 'date', run_date=job_start, kwargs={
                 'number': number, 'login': login, 'user_data': users, 'built': setup_output_file['enterprise_built'], 'seed': seed, 'logfile': logfile})
 
+    print(f"Now is {datetime.now()}")
     return scheduler
 
 
@@ -236,6 +265,8 @@ def main():
     parser.add_argument("--fast-debug", action="store_true", help="Enable fast debug mode")
     parser.add_argument("--seed", type=int, help="Specify a seed value")
     parser.add_argument("--logfile", type=str, help="Log output file", default=f"workflow.{emulation_start_time.isoformat()}.log")
+    parser.add_argument("--rebase-time", action='store_true', help="Rebase timestamps from logins.json", default=False)
+
 
     args = parser.parse_args()
 
@@ -245,11 +276,12 @@ def main():
     fast_debug = args.fast_debug
     seed = args.seed
     logfile = args.logfile
+    rebase_time = args.rebase_time
 
     output = {}
     output['start_time'] = emulation_start_time.isoformat()
 
-    scheduler = schedule_logins(logins_file, setup_output_file, logfile=logfile, fast_debug=fast_debug, seed=seed)
+    scheduler = schedule_logins(logins_file, setup_output_file, logfile=logfile, fast_debug=fast_debug, seed=seed, rebase_time=rebase_time)
 
     scheduler.start()
 
