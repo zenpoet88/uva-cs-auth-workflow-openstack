@@ -89,7 +89,11 @@ If you want to specify a seed for more deterministic emulation results:
 $ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --fast-debug --seed 42 2>&1 |tee workflow.log
 ```
 
+If you would like to replay the same set of configuration parameters from logins.json, you can rebase timestamps:
 
+```
+$ python -u ./emulate-logins.py  post-deploy-output.json logins.json  --rebase-time 2>&1 | stdbuf -o0 -e0 tee workflow.log
+```
 
 ### Cleanup
 
