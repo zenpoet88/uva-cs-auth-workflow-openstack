@@ -40,6 +40,9 @@ def process_file(input_file, bin_period):
     total_bins = int((end_time - start_time).total_seconds() // bin_period) + 1
     full_bins = pd.DataFrame({'bin': range(total_bins)})
 
+    print(f"Total bins: {total_bins}")
+    print(f"Full bins: {full_bins}")
+
     # Merge with grouped data and fill missing bins with 0
     grouped = pd.merge(full_bins, grouped, on='bin', how='left').fillna({'count': 0})
     grouped['count'] = grouped['count'].astype(int)
