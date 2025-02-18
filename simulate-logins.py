@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 
+import argparse
 import math
 import random
 import string
@@ -133,7 +134,9 @@ def simulate_hour(term_no, day_to_work, hour_to_work, user, enterprise):
 
     for login_no in range(logins_this_hour):
         start_second = day_to_work + timedelta(hours=hour_to_work) + timedelta(seconds=random.randint(0, 3600))
-        login_length_second = random.randint(1, 120 * 60)
+#        login_length_second = random.randint(1, 120 * 60)
+# Use shorter settings for eval
+        login_length_second = random.randint(1, 120)
         login_sequence = simulate_login(term_no, start_second, login_length_second, user, enterprise)
         logins.append(login_sequence)
 
@@ -241,9 +244,25 @@ def main():
     start_date = datetime.today()
     days_to_simulate = 10
 
-    if len(sys.argv) != 3 and len(sys.argv) != 4:
-        print("Usage:  " + sys.argv[0] + " user-roles.json enterprise.json [post-deploy-output.json]")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Process JSON files for deployment.")
+    
+    # Positional arguments
+    parser.add_argument('user_roles', help="Path to user-roles.json")
+    parser.add_argument('enterprise', help="Path to enterprise.json")
+    parser.add_argument('post_deploy_output', nargs='?', help="Optional path to post-deploy-output.json")
+    
+    # Optional argument --seed
+    parser.add_argument('--seed', type=int, help="Optional seed value for random operations")
+
+    args = parser.parse_args()
+
+    # Display parsed arguments
+    print(f"User Roles JSON: {args.user_roles}")
+    print(f"Enterprise JSON: {args.enterprise}")
+    if args.post_deploy_output:
+        print(f"Post Deploy Output JSON: {args.post_deploy_output}")
+    if args.seed is not None:
+        print(f"Seed: {args.seed}")
 
     # setup output
     json_output = {}
@@ -252,11 +271,16 @@ def main():
     json_output["simulation_end"] = str(start_date + timedelta(days=days_to_simulate))
 
     # read config files
-    user_roles_filename = sys.argv[1]
-    enterprise_filename = sys.argv[2]
-    output_filename = None
-    if len(sys.argv) == 4:
-        output_filename = sys.argv[3]
+    user_roles_filename = args.user_roles
+    enterprise_filename = args.enterprise
+    output_filename = args.post_deploy_output
+
+    if args.seed is not None:
+        seed = args.seed
+    else:
+        seed = random.randint(1, 10000)
+
+    random.seed(seed)
 
     user_roles, enterprise, built = load_configs(
         user_roles_filename,
@@ -271,6 +295,7 @@ def main():
     # create login pattern
     logins = simulate_logins(start_date, days_to_simulate, users, enterprise)
     json_output['logins'] = logins
+    json_output['seed'] = seed
 
     # deploy users to domain if given info
     if output_filename is not None:
