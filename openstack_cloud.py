@@ -31,7 +31,7 @@ class OpenstackCloud:
     def get_session(self):
         options = argparse.ArgumentParser(description='Awesome OpenStack App')
         self.conn = openstack.connect(options=options, verify=False)
-        project = self.conn.get_project(self.project_id)
+        project = self.conn.identity.get_project(self.project_id)
         self.project_name = project.name
         self.enterprise_url = f"{self.project_name}.os"
 
@@ -82,7 +82,7 @@ class OpenstackCloud:
     def check_deploy_ok(self, enterprise):
         zone = self.find_zone()
         if zone is not None:
-            print(f"Zone already exists: {self.enterprise_url}.")
+            print(f"Zone {self.enterprise_url}u already exists as: {zone}.")
             return False
 
         server_name_set = {x['name'].strip() for x in self.servers.values()}
