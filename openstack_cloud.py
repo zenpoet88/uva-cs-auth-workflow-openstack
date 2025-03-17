@@ -103,7 +103,7 @@ class OpenstackCloud:
             print(f"Zone \"{self.enterprise_url}\" exists.  Deleting and re-creating ...")
             self.designateClient.zones.delete(self.enterprise_url + ".")
             while self.find_zone() is not None:
-                time.sleep(5)
+                time.sleep(30)
             self.designateClient.zones.create(f"{self.enterprise_url}.", email="root@" + self.enterprise_url)
 
         server_name_set = {x['name'].strip() for x in self.servers.values()}
@@ -221,7 +221,7 @@ class OpenstackCloud:
                 security_groups=[security_group],
                 nics=nova_nics
             )
-            time.sleep(5)
+            time.sleep(30)
             print("  Server " + name + " has id " + nova_instance.id)
             nova_instance = self.nova_sess.servers.get(nova_instance.id)
             # print(dir(nova_instance))
@@ -311,7 +311,7 @@ class OpenstackCloud:
         while waiting:
             try:
                 print("Waiting for instances to be ready. Sleeping 5 seconds...")
-                time.sleep(10)
+                time.sleep(30)
                 waiting = False
                 for node in ret['nodes']:
                     id_value = node['id']
@@ -365,7 +365,7 @@ class OpenstackCloud:
                 node['password'] = nova_instance.get_password(private_key=self.cloud_config['private_key_file'])
                 if node['password'] == '':
                     print("Waiting for password for node " + name + ".")
-                    time.sleep(5)
+                    time.sleep(30)
                 else:
                     break
 
