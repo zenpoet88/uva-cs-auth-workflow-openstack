@@ -32,8 +32,7 @@ if [ "${#temp_files[@]}" -eq 0 ]; then
     exit 1
 fi
 
-# Pass all the temporary files as arguments to xxx.py
-echo "Calling Python post-processing tool"
+echo "Calling Python post-processing tool: stats will be in cum_stats.csv"
 python3 post_process_logs.py "${temp_files[@]}" -o cum_stats.csv -t 30
 
 # Clean up temporary files
